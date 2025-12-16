@@ -148,21 +148,6 @@ See platform-specific guides for detailed instructions.
 
 These are session-level estimates from transcript data, typically accurate within 10% of the `/cost` command. Differences occur due to background operations, timing variations, and API measurement methods. For official billing amounts, use the `/cost` command. For subscription users, these show API-equivalent costs - your actual usage is included in your plan.
 
-## Distribution
-
-**What to share:**
-- Minimum: `install-claude-stats.sh` + `README.md`
-- Complete: All 5 files (installer + README + 3 platform guides)
-
-**Via email/Slack:**
-```
-"Hey team! Real-time Claude Code cost tracking - 2 min setup.
-Run: ./install-claude-stats.sh
-See: README.md for details"
-```
-
-**Installation success:** Users see stats in their status bar and can run `/session-stats`
-
 ## Technical Details
 
 - **Deduplication:** Groups by `requestId` to avoid counting duplicates (3-4x inflation without this)
@@ -190,7 +175,9 @@ Potential improvements for future versions:
 ## Support
 
 **Installation issues?** Check troubleshooting section in your platform guide
+
 **Questions?** Review the detailed setup guide for your OS
+
 **Need help?** Verify prerequisites are installed (`jq`, `bc`)
 
 ---
