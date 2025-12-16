@@ -3,10 +3,10 @@
 ## Project Overview
 
 **Name:** Claude Code Session Stats Tracking
-**Version:** 0.4.2 (see [CHANGELOG.md](CHANGELOG.md) for version history)
+**Version:** 0.5.1 (see [CHANGELOG.md](CHANGELOG.md) for version history)
 **Purpose:** Real-time cost tracking and analytics system for Claude Code sessions
 **Type:** CLI utility / Developer tool
-**Status:** Development phase (0.x.x versions) - Insight-focused analytics with billing mode detection
+**Status:** Development phase (0.x.x versions) - Advanced analytics dashboard with health scoring and optimization recommendations
 
 ## What This Project Does
 
@@ -79,31 +79,65 @@ claude-session-stats/
 ### 2. show-session-stats.sh (Detailed Stats Script / Trip Computer)
 
 **Location:** `~/.claude/hooks/show-session-stats.sh`
-**Purpose:** Insight-focused analytics dashboard based on transcript data
+**Purpose:** Advanced analytics dashboard with health scoring and optimization recommendations
 **Triggered by:** `/trip-computer` slash command
-**Version:** 0.4.2 - Enhanced with cache efficiency and insights
+**Version:** 0.5.1 - Fixed locale warning; Major enhancements: health scoring, cost drivers, model mix, efficiency metrics
 
 **Core Functionality:**
 - Analyzes session transcript to calculate best-effort cost estimates
 - Typically within 10% of actual costs (validated against `/cost` command)
-- Provides actionable insights and recommendations for optimization
+- Provides actionable insights and recommendations prioritized by potential savings
 - Adapts messaging based on billing mode (API vs Subscription)
+- Automated session health assessment (0-100 score)
 
-**Output Includes:**
+**Output Sections:**
 
-**📊 Usage Estimates:**
+**📊 Quick Summary:**
+- Health status (Excellent/Good/Fair/Poor/Critical) with score (X/100)
+- Cost trend indicator (Rising ➚ / Stable ➡️ / Falling ➘)
+- Action recommendation count
+
+**📈 Session Health (0-100):**
+- 5-star rating system (⭐⭐⭐⭐⭐)
+- Component breakdown:
+  - Cache efficiency contribution (0-40 points)
+  - Cost per message contribution (0-30 points)
+  - Context growth contribution (0-30 points)
+- Clear indicators (✅ positive, ⚠️ warning, ➡️ neutral)
+
+**🤖 Model Mix:**
+- Per-model usage breakdown with visual bars
+- Request count per model
+- Cost percentage per model
+- Smart switching suggestions (e.g., "Switching Sonnet → Haiku could save $X (67% reduction)")
+
+**💵 Cost Drivers:**
+- Percentage breakdown with visual bars:
+  - Input tokens (X% of total cost)
+  - Output tokens (X% of total cost)
+  - Cache writes (X% of total cost)
+  - Cache reads (X% of total cost)
+- Context-aware insights (e.g., "Output tokens are your biggest cost driver")
+
+**⚡ Efficiency Metrics:**
+- Output/Input ratio with verbosity assessment
+- Cache hit rate with dollar savings
+- Cost per token (8 decimal precision)
+- Contextual guidance for each metric
+
+**📊 Session Usage Estimate:**
 - Message count, tool count, total cost estimate
 - Cache efficiency percentage
 - Complete token breakdown (input, output, cache writes, cache reads)
-- For API users: Reminder to run `/cost` for official billing
-- For Subscription users: Notes usage is included in subscription
+- Billing mode-specific disclaimers
 
-**💡 Insights & Recommendations:**
-- Cache performance analysis (excellent/good/low with specific percentages)
-- Context growth warnings (when to use `/clear`)
-- Cost per message optimization suggestions
-- Tool usage pattern analysis
-- Smart, context-aware actionable recommendations
+**🎯 Top Optimization Actions:**
+- Top 3 recommendations prioritized by potential savings
+- Dollar savings per 10 messages
+- Percentage reduction estimates
+- Examples:
+  - "Switch to Haiku for simple tasks → Save ~$0.60/10 msgs (75% reduction)"
+  - "Ask for more concise responses → Save ~$0.20/10 msgs (25% reduction)"
 
 **📈 Trajectory:**
 - Cost per message rate
@@ -112,6 +146,8 @@ claude-session-stats/
 
 **Key Features:**
 - Best-effort calculations from transcript data (deduplication by requestId)
+- Health scoring algorithm (40 pts cache + 30 pts cost + 30 pts context)
+- Bubble sort for recommendation prioritization
 - Emphasizes "what should I do?" over "what are the numbers?"
 - Clear disclaimers about estimate accuracy
 - Actionable insights always provided regardless of billing mode
@@ -517,7 +553,7 @@ For questions or issues with this tracking system, refer to:
 
 ---
 
-**Last Updated:** 2025-12-16 (v0.4.2 - Fixed status line update issue)
+**Last Updated:** 2025-12-16 (v0.5.1 - Fixed locale warning)
 **Claude Code Version Compatibility:** v1.0+
 **Status:** Stable, production-ready
 - all changes proposed in this project should be applied both on the status line and the custom command, along with updating installer script and relevant documentation / guides.

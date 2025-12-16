@@ -378,15 +378,14 @@ echo "✓ Installed brief-stats.sh (status line)"
 
 # Create show-session-stats.sh (detailed stats - enhanced "trip computer" version)
 cat > ~/.claude/hooks/show-session-stats.sh << 'SCRIPT_EOF'
-#!/bin/bash
 set -e
 
 # Helper script to display session statistics for current or specified session
-# Claude Code Session Stats - Version 0.4.0
+# Claude Code Session Stats - Version 0.5.1
 # Usage: ./show-session-stats.sh [session_id]
 
-# Force en_US locale for consistent number formatting with commas as thousand separators
-export LC_NUMERIC=en_US.UTF-8
+# Force C locale for consistent number formatting (avoids locale warnings on systems without en_US.UTF-8)
+export LC_NUMERIC=C
 
 # If session_id provided, use it; otherwise find the most recent session
 if [ -n "$1" ]; then
@@ -450,6 +449,7 @@ map({
 group_by(.model) |
 map({
   model: .[0].model,
+  requests: length,
   input: (map(.input) | add),
   output: (map(.output) | add),
   cache_creation: (map(.cache_creation) | add),
@@ -486,8 +486,39 @@ get_model_pricing() {
   echo "$input_rate $output_rate $cache_write_mult $cache_read_mult"
 }
 
-# Calculate estimated costs per model
+# Helper function to get friendly model name
+get_friendly_model_name() {
+  local model_name="$1"
+  if [[ "$model_name" == *"opus-4-5"* ]] || [[ "$model_name" == *"opus-4.5"* ]]; then
+    echo "Opus 4.5"
+  elif [[ "$model_name" == *"opus-4"* ]]; then
+    echo "Opus 4"
+  elif [[ "$model_name" == *"opus-3"* ]]; then
+    echo "Opus 3"
+  elif [[ "$model_name" == *"haiku-4-5"* ]] || [[ "$model_name" == *"haiku-4.5"* ]]; then
+    echo "Haiku 4.5"
+  elif [[ "$model_name" == *"haiku-3-5"* ]] || [[ "$model_name" == *"haiku-3.5"* ]]; then
+    echo "Haiku 3.5"
+  elif [[ "$model_name" == *"haiku-3"* ]]; then
+    echo "Haiku 3"
+  elif [[ "$model_name" == *"sonnet"* ]]; then
+    echo "Sonnet 4.5"
+  else
+    echo "Unknown"
+  fi
+}
+
+# Calculate estimated costs per model and per cost driver
 ESTIMATE_TOTAL_COST=0
+TOTAL_INPUT_COST=0
+TOTAL_OUTPUT_COST=0
+TOTAL_CACHE_WRITE_COST=0
+TOTAL_CACHE_READ_COST=0
+
+declare -a MODEL_NAMES
+declare -a MODEL_COSTS
+declare -a MODEL_REQUESTS
+
 MODEL_COUNT=$(echo "$PER_MODEL_DATA" | jq 'length')
 for ((i=0; i<MODEL_COUNT; i++)); do
   MODEL_NAME=$(echo "$PER_MODEL_DATA" | jq -r ".[$i].model")
@@ -495,18 +526,43 @@ for ((i=0; i<MODEL_COUNT; i++)); do
   MODEL_OUTPUT=$(echo "$PER_MODEL_DATA" | jq -r ".[$i].output")
   MODEL_CACHE_WRITE=$(echo "$PER_MODEL_DATA" | jq -r ".[$i].cache_creation")
   MODEL_CACHE_READ=$(echo "$PER_MODEL_DATA" | jq -r ".[$i].cache_read")
+  MODEL_REQUEST_COUNT=$(echo "$PER_MODEL_DATA" | jq -r ".[$i].requests")
 
   read INPUT_RATE OUTPUT_RATE CACHE_WRITE_MULT CACHE_READ_MULT < <(get_model_pricing "$MODEL_NAME")
 
-  MODEL_COST=$(echo "scale=4; \
-    ($MODEL_INPUT * $INPUT_RATE / 1000000) + \
-    ($MODEL_OUTPUT * $OUTPUT_RATE / 1000000) + \
-    ($MODEL_CACHE_WRITE * $INPUT_RATE * $CACHE_WRITE_MULT / 1000000) + \
-    ($MODEL_CACHE_READ * $INPUT_RATE * $CACHE_READ_MULT / 1000000)" | bc)
+  # Calculate individual cost components
+  INPUT_COST=$(echo "scale=4; $MODEL_INPUT * $INPUT_RATE / 1000000" | bc)
+  OUTPUT_COST=$(echo "scale=4; $MODEL_OUTPUT * $OUTPUT_RATE / 1000000" | bc)
+  CACHE_WRITE_COST=$(echo "scale=4; $MODEL_CACHE_WRITE * $INPUT_RATE * $CACHE_WRITE_MULT / 1000000" | bc)
+  CACHE_READ_COST=$(echo "scale=4; $MODEL_CACHE_READ * $INPUT_RATE * $CACHE_READ_MULT / 1000000" | bc)
 
+  # Fix leading dot
+  [[ "$INPUT_COST" == .* ]] && INPUT_COST="0$INPUT_COST"
+  [[ "$OUTPUT_COST" == .* ]] && OUTPUT_COST="0$OUTPUT_COST"
+  [[ "$CACHE_WRITE_COST" == .* ]] && CACHE_WRITE_COST="0$CACHE_WRITE_COST"
+  [[ "$CACHE_READ_COST" == .* ]] && CACHE_READ_COST="0$CACHE_READ_COST"
+
+  # Accumulate totals
+  TOTAL_INPUT_COST=$(echo "scale=4; $TOTAL_INPUT_COST + $INPUT_COST" | bc)
+  TOTAL_OUTPUT_COST=$(echo "scale=4; $TOTAL_OUTPUT_COST + $OUTPUT_COST" | bc)
+  TOTAL_CACHE_WRITE_COST=$(echo "scale=4; $TOTAL_CACHE_WRITE_COST + $CACHE_WRITE_COST" | bc)
+  TOTAL_CACHE_READ_COST=$(echo "scale=4; $TOTAL_CACHE_READ_COST + $CACHE_READ_COST" | bc)
+
+  [[ "$TOTAL_INPUT_COST" == .* ]] && TOTAL_INPUT_COST="0$TOTAL_INPUT_COST"
+  [[ "$TOTAL_OUTPUT_COST" == .* ]] && TOTAL_OUTPUT_COST="0$TOTAL_OUTPUT_COST"
+  [[ "$TOTAL_CACHE_WRITE_COST" == .* ]] && TOTAL_CACHE_WRITE_COST="0$TOTAL_CACHE_WRITE_COST"
+  [[ "$TOTAL_CACHE_READ_COST" == .* ]] && TOTAL_CACHE_READ_COST="0$TOTAL_CACHE_READ_COST"
+
+  MODEL_COST=$(echo "scale=4; $INPUT_COST + $OUTPUT_COST + $CACHE_WRITE_COST + $CACHE_READ_COST" | bc)
   [[ "$MODEL_COST" == .* ]] && MODEL_COST="0$MODEL_COST"
+
   ESTIMATE_TOTAL_COST=$(echo "scale=4; $ESTIMATE_TOTAL_COST + $MODEL_COST" | bc)
   [[ "$ESTIMATE_TOTAL_COST" == .* ]] && ESTIMATE_TOTAL_COST="0$ESTIMATE_TOTAL_COST"
+
+  # Store for model mix section
+  MODEL_NAMES[$i]=$(get_friendly_model_name "$MODEL_NAME")
+  MODEL_COSTS[$i]=$MODEL_COST
+  MODEL_REQUESTS[$i]=$MODEL_REQUEST_COUNT
 done
 
 # Calculate cache efficiency
@@ -541,93 +597,372 @@ done
 FIRST_INPUT=$(jq -s '[.[] | select(.message.usage.input_tokens)] | .[0].message.usage.input_tokens // 0' "$TRANSCRIPT_PATH")
 LATEST_INPUT=$(jq -s '[.[] | select(.message.usage.input_tokens)] | .[-1].message.usage.input_tokens // 0' "$TRANSCRIPT_PATH")
 
-# ============================================================================
-# NOTE: /cost command cannot be executed programmatically
-# ============================================================================
-# The /cost command is a Claude Code slash command that cannot be executed
-# from bash scripts. API users should run /cost separately to compare with
-# these transcript-based estimates.
-OFFICIAL_DATA=""
+# Calculate efficiency metrics
+OUTPUT_INPUT_RATIO=0
+COST_PER_TOKEN=0
+if [ "$INPUT_TOKENS" -gt 0 ]; then
+  OUTPUT_INPUT_RATIO=$(echo "scale=1; $OUTPUT_TOKENS / $INPUT_TOKENS" | bc)
+  [[ "$OUTPUT_INPUT_RATIO" == .* ]] && OUTPUT_INPUT_RATIO="0$OUTPUT_INPUT_RATIO"
+fi
+if [ "$TOTAL_TOKENS" -gt 0 ]; then
+  COST_PER_TOKEN=$(echo "scale=8; $ESTIMATE_TOTAL_COST / $TOTAL_TOKENS" | bc)
+  [[ "$COST_PER_TOKEN" == .* ]] && COST_PER_TOKEN="0$COST_PER_TOKEN"
+fi
 
 # ============================================================================
-# GENERATE INSIGHTS & RECOMMENDATIONS
+# SESSION HEALTH SCORE CALCULATION (0-100)
 # ============================================================================
 
-INSIGHTS=""
-RECOMMENDATIONS=""
+HEALTH_SCORE=0
+HEALTH_REASONS=()
 
-# Cache efficiency insights
+# Cache efficiency component (0-40 points)
 if [ "$TOTAL_CACHE_TOKENS" -gt 0 ]; then
   if (( $(echo "$CACHE_EFFICIENCY >= 80" | bc -l) )); then
-    INSIGHTS="${INSIGHTS}  ✓ Excellent cache performance (${CACHE_EFFICIENCY}% hit rate saving ~\$${CACHE_READ_COST_SAVED})\n"
+    HEALTH_SCORE=$((HEALTH_SCORE + 40))
+    HEALTH_REASONS+=("✅ Excellent cache efficiency")
   elif (( $(echo "$CACHE_EFFICIENCY >= 50" | bc -l) )); then
-    INSIGHTS="${INSIGHTS}  ✓ Good cache performance (${CACHE_EFFICIENCY}% hit rate saving ~\$${CACHE_READ_COST_SAVED})\n"
-    RECOMMENDATIONS="${RECOMMENDATIONS}  • Stay in session to maximize cache benefits\n"
+    HEALTH_SCORE=$((HEALTH_SCORE + 30))
+    HEALTH_REASONS+=("✅ Good cache efficiency")
+  elif (( $(echo "$CACHE_EFFICIENCY >= 20" | bc -l) )); then
+    HEALTH_SCORE=$((HEALTH_SCORE + 15))
+    HEALTH_REASONS+=("⚠️  Moderate cache efficiency")
   else
-    INSIGHTS="${INSIGHTS}  ⚠️ Low cache reuse (${CACHE_EFFICIENCY}% hit rate)\n"
-    RECOMMENDATIONS="${RECOMMENDATIONS}  • Consider starting fresh session - cache may be stale\n"
+    HEALTH_SCORE=$((HEALTH_SCORE + 5))
+    HEALTH_REASONS+=("⚠️  Low cache efficiency")
+  fi
+else
+  HEALTH_SCORE=$((HEALTH_SCORE + 20))
+  HEALTH_REASONS+=("➡️  No cache usage yet")
+fi
+
+# Cost per message component (0-30 points)
+if [ "$USER_MESSAGES" -gt 0 ]; then
+  if (( $(echo "$COST_PER_MESSAGE <= 0.10" | bc -l) )); then
+    HEALTH_SCORE=$((HEALTH_SCORE + 30))
+    HEALTH_REASONS+=("✅ Efficient cost per message")
+  elif (( $(echo "$COST_PER_MESSAGE <= 0.30" | bc -l) )); then
+    HEALTH_SCORE=$((HEALTH_SCORE + 20))
+    HEALTH_REASONS+=("✅ Reasonable cost per message")
+  elif (( $(echo "$COST_PER_MESSAGE <= 0.50" | bc -l) )); then
+    HEALTH_SCORE=$((HEALTH_SCORE + 10))
+    HEALTH_REASONS+=("⚠️  Moderate cost per message")
+  else
+    HEALTH_SCORE=$((HEALTH_SCORE + 5))
+    HEALTH_REASONS+=("⚠️  High cost per message")
+  fi
+else
+  HEALTH_SCORE=$((HEALTH_SCORE + 15))
+fi
+
+# Context growth component (0-30 points)
+if [ "$FIRST_INPUT" -gt 0 ] && [ "$LATEST_INPUT" -gt 0 ]; then
+  GROWTH_RATIO=$(echo "scale=1; $LATEST_INPUT / $FIRST_INPUT" | bc)
+  [[ "$GROWTH_RATIO" == .* ]] && GROWTH_RATIO="0$GROWTH_RATIO"
+
+  if (( $(echo "$GROWTH_RATIO < 3" | bc -l) )); then
+    HEALTH_SCORE=$((HEALTH_SCORE + 30))
+    HEALTH_REASONS+=("✅ Healthy context size")
+  elif (( $(echo "$GROWTH_RATIO < 5" | bc -l) )); then
+    HEALTH_SCORE=$((HEALTH_SCORE + 20))
+    HEALTH_REASONS+=("✅ Moderate context growth")
+  elif (( $(echo "$GROWTH_RATIO < 8" | bc -l) )); then
+    HEALTH_SCORE=$((HEALTH_SCORE + 10))
+    HEALTH_REASONS+=("⚠️  Context growing significantly")
+  else
+    HEALTH_SCORE=$((HEALTH_SCORE + 5))
+    HEALTH_REASONS+=("⚠️  Context bloat detected")
+  fi
+else
+  HEALTH_SCORE=$((HEALTH_SCORE + 15))
+fi
+
+# Determine health rating
+if [ "$HEALTH_SCORE" -ge 90 ]; then
+  HEALTH_RATING="⭐⭐⭐⭐⭐"
+  HEALTH_STATUS="Excellent"
+elif [ "$HEALTH_SCORE" -ge 75 ]; then
+  HEALTH_RATING="⭐⭐⭐⭐"
+  HEALTH_STATUS="Good"
+elif [ "$HEALTH_SCORE" -ge 60 ]; then
+  HEALTH_RATING="⭐⭐⭐"
+  HEALTH_STATUS="Fair"
+elif [ "$HEALTH_SCORE" -ge 40 ]; then
+  HEALTH_RATING="⭐⭐"
+  HEALTH_STATUS="Poor"
+else
+  HEALTH_RATING="⭐"
+  HEALTH_STATUS="Critical"
+fi
+
+# ============================================================================
+# GENERATE SMART RECOMMENDATIONS (Prioritized by savings)
+# ============================================================================
+
+declare -a RECOMMENDATIONS
+declare -a REC_SAVINGS
+
+# Recommendation 1: Model switching
+if [ "$MODEL_COUNT" -gt 0 ]; then
+  PRIMARY_MODEL="${MODEL_NAMES[0]}"
+  if [[ "$PRIMARY_MODEL" == *"Opus"* ]] || [[ "$PRIMARY_MODEL" == *"Sonnet"* ]]; then
+    POTENTIAL_SAVING=$(echo "scale=2; $COST_PER_MESSAGE * 0.75 * 10" | bc)
+    [[ "$POTENTIAL_SAVING" == .* ]] && POTENTIAL_SAVING="0$POTENTIAL_SAVING"
+    RECOMMENDATIONS+=("Switch to Haiku for simple tasks")
+    REC_SAVINGS+=("$POTENTIAL_SAVING")
   fi
 fi
 
-# Context growth insights
+# Recommendation 2: Output verbosity
+if [ "$OUTPUT_TOKENS" -gt 0 ] && [ "$INPUT_TOKENS" -gt 0 ]; then
+  if (( $(echo "$OUTPUT_INPUT_RATIO > 2.5" | bc -l) )); then
+    POTENTIAL_SAVING=$(echo "scale=2; $COST_PER_MESSAGE * 0.25 * 10" | bc)
+    [[ "$POTENTIAL_SAVING" == .* ]] && POTENTIAL_SAVING="0$POTENTIAL_SAVING"
+    RECOMMENDATIONS+=("Ask for more concise responses")
+    REC_SAVINGS+=("$POTENTIAL_SAVING")
+  fi
+fi
+
+# Recommendation 3: Cache optimization
+if [ "$TOTAL_CACHE_TOKENS" -gt 0 ]; then
+  if (( $(echo "$CACHE_EFFICIENCY >= 70" | bc -l) )); then
+    POTENTIAL_SAVING=$(echo "scale=2; $CACHE_READ_COST_SAVED / $USER_MESSAGES * 10" | bc)
+    [[ "$POTENTIAL_SAVING" == .* ]] && POTENTIAL_SAVING="0$POTENTIAL_SAVING"
+    RECOMMENDATIONS+=("Continue in session (cache working well)")
+    REC_SAVINGS+=("$POTENTIAL_SAVING")
+  elif (( $(echo "$CACHE_EFFICIENCY < 30" | bc -l) )); then
+    POTENTIAL_SAVING=$(echo "scale=2; $COST_PER_MESSAGE * 0.15 * 10" | bc)
+    [[ "$POTENTIAL_SAVING" == .* ]] && POTENTIAL_SAVING="0$POTENTIAL_SAVING"
+    RECOMMENDATIONS+=("Use /clear to start fresh (cache inefficient)")
+    REC_SAVINGS+=("$POTENTIAL_SAVING")
+  fi
+fi
+
+# Recommendation 4: Context reset
 if [ "$FIRST_INPUT" -gt 0 ] && [ "$LATEST_INPUT" -gt 0 ]; then
   GROWTH_RATIO=$(echo "scale=1; $LATEST_INPUT / $FIRST_INPUT" | bc)
   [[ "$GROWTH_RATIO" == .* ]] && GROWTH_RATIO="0$GROWTH_RATIO"
 
   if (( $(echo "$GROWTH_RATIO >= 5" | bc -l) )); then
-    GROWTH_PCT=$(echo "scale=0; (($LATEST_INPUT - $FIRST_INPUT) * 100) / $FIRST_INPUT" | bc)
-    INSIGHTS="${INSIGHTS}  ⚠️ Context grew significantly (${FIRST_INPUT} → ${LATEST_INPUT} tokens, +${GROWTH_PCT}%)\n"
-    RECOMMENDATIONS="${RECOMMENDATIONS}  • Use /clear to reset context - will improve speed and reduce cost\n"
+    POTENTIAL_SAVING=$(echo "scale=2; $COST_PER_MESSAGE * 0.20 * 10" | bc)
+    [[ "$POTENTIAL_SAVING" == .* ]] && POTENTIAL_SAVING="0$POTENTIAL_SAVING"
+    RECOMMENDATIONS+=("Use /clear to reduce context size")
+    REC_SAVINGS+=("$POTENTIAL_SAVING")
   fi
 fi
 
-# Cost per message insights
-if [ "$USER_MESSAGES" -gt 5 ] && (( $(echo "$COST_PER_MESSAGE > 0.50" | bc -l) )); then
-  INSIGHTS="${INSIGHTS}  💰 High cost per message (\$${COST_PER_MESSAGE})\n"
-  RECOMMENDATIONS="${RECOMMENDATIONS}  • Consider using Haiku for simpler tasks to reduce costs\n"
-  RECOMMENDATIONS="${RECOMMENDATIONS}  • Ask more focused questions to reduce output token usage\n"
-fi
-
-# Tool usage pattern
-if [ "$TOOL_CALLS" -gt 20 ] && [ "$USER_MESSAGES" -gt 0 ]; then
-  TOOLS_PER_MSG=$(echo "scale=1; $TOOL_CALLS / $USER_MESSAGES" | bc)
-  [[ "$TOOLS_PER_MSG" == .* ]] && TOOLS_PER_MSG="0$TOOLS_PER_MSG"
-  INSIGHTS="${INSIGHTS}  🔧 High tool usage (${TOOLS_PER_MSG} tools per message)\n"
-fi
-
-# Default positive feedback if no issues
-if [ -z "$INSIGHTS" ]; then
-  INSIGHTS="  ✓ Session efficiency looks good - no optimization needed\n"
-fi
-
-if [ -z "$RECOMMENDATIONS" ]; then
-  RECOMMENDATIONS="  • Continue with current workflow\n"
-fi
-
-# Calculate trajectory
-PROJECTED_NEXT_10="N/A"
-if [ "$USER_MESSAGES" -gt 0 ]; then
-  PROJECTED=$(echo "scale=2; $COST_PER_MESSAGE * 10" | bc)
-  [[ "$PROJECTED" == .* ]] && PROJECTED="0$PROJECTED"
-  PROJECTED_NEXT_10="~\$$PROJECTED"
-fi
+# Sort recommendations by savings (bubble sort for bash compatibility)
+REC_COUNT=${#RECOMMENDATIONS[@]}
+for ((i=0; i<REC_COUNT-1; i++)); do
+  for ((j=0; j<REC_COUNT-i-1; j++)); do
+    if (( $(echo "${REC_SAVINGS[j]} < ${REC_SAVINGS[j+1]}" | bc -l) )); then
+      # Swap
+      temp_rec="${RECOMMENDATIONS[j]}"
+      temp_sav="${REC_SAVINGS[j]}"
+      RECOMMENDATIONS[j]="${RECOMMENDATIONS[j+1]}"
+      REC_SAVINGS[j]="${REC_SAVINGS[j+1]}"
+      RECOMMENDATIONS[j+1]="$temp_rec"
+      REC_SAVINGS[j+1]="$temp_sav"
+    fi
+  done
+done
 
 # ============================================================================
-# OUTPUT DISPLAY - Adapt based on billing mode
+# OUTPUT DISPLAY - Enhanced visual hierarchy
 # ============================================================================
+
+# Quick summary line
+TREND_INDICATOR="➡️"
+TREND_TEXT="Stable"
+if [ "$USER_MESSAGES" -gt 2 ]; then
+  EARLY_MSGS=2
+  LATE_START=$((USER_MESSAGES - 2))
+  if [ "$LATE_START" -gt "$EARLY_MSGS" ]; then
+    EARLY_COST=$(echo "scale=4; $ESTIMATE_TOTAL_COST / $USER_MESSAGES * $EARLY_MSGS" | bc)
+    LATE_COST=$(echo "scale=4; $ESTIMATE_TOTAL_COST - ($ESTIMATE_TOTAL_COST / $USER_MESSAGES * $LATE_START)" | bc)
+    EARLY_AVG=$(echo "scale=4; $EARLY_COST / $EARLY_MSGS" | bc)
+    LATE_AVG=$(echo "scale=4; $LATE_COST / 2" | bc)
+
+    [[ "$EARLY_AVG" == .* ]] && EARLY_AVG="0$EARLY_AVG"
+    [[ "$LATE_AVG" == .* ]] && LATE_AVG="0$LATE_AVG"
+
+    if (( $(echo "$LATE_AVG > $EARLY_AVG * 1.2" | bc -l) )); then
+      TREND_INDICATOR="➚"
+      TREND_TEXT="Rising"
+    elif (( $(echo "$LATE_AVG < $EARLY_AVG * 0.8" | bc -l) )); then
+      TREND_INDICATOR="➘"
+      TREND_TEXT="Falling"
+    fi
+  fi
+fi
+
+ACTION_TEXT="Review insights below"
+if [ ${#RECOMMENDATIONS[@]} -gt 0 ]; then
+  ACTION_TEXT="See top ${#RECOMMENDATIONS[@]} optimization tips"
+fi
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════════════════════════╗"
-echo "║                          🚗 TRIP COMPUTER v0.4.0                            ║"
-echo "║                        Session Analytics Dashboard                          ║"
+echo "║  🚗 TRIP COMPUTER v0.5.1  │  \$$ESTIMATE_TOTAL_COST session  │  ${CACHE_EFFICIENCY}% efficient  ║"
 echo "╚══════════════════════════════════════════════════════════════════════════════╝"
+echo ""
+echo "📊 QUICK SUMMARY"
+echo "  Status: $HEALTH_STATUS ($HEALTH_SCORE/100)  │  Trend: $TREND_INDICATOR $TREND_TEXT  │  Action: $ACTION_TEXT"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# ============================================================================
+# SESSION HEALTH SCORE
+# ============================================================================
+
+echo "📈 SESSION HEALTH: $HEALTH_SCORE/100  $HEALTH_RATING"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+for reason in "${HEALTH_REASONS[@]}"; do
+  echo "  $reason"
+done
+echo ""
+
+# ============================================================================
+# MODEL MIX
+# ============================================================================
+
+if [ "$MODEL_COUNT" -gt 0 ]; then
+  echo "🤖 MODEL MIX"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  for ((i=0; i<MODEL_COUNT; i++)); do
+    MODEL_NAME="${MODEL_NAMES[i]}"
+    MODEL_COST="${MODEL_COSTS[i]}"
+    MODEL_REQ="${MODEL_REQUESTS[i]}"
+
+    # Calculate percentage
+    if (( $(echo "$ESTIMATE_TOTAL_COST > 0" | bc -l) )); then
+      MODEL_PCT=$(echo "scale=0; 100 * $MODEL_COST / $ESTIMATE_TOTAL_COST" | bc)
+      [[ "$MODEL_PCT" == .* ]] && MODEL_PCT="0"
+    else
+      MODEL_PCT=0
+    fi
+
+    # Create visual bar (20 chars max)
+    BAR_LENGTH=$(echo "scale=0; $MODEL_PCT / 5" | bc)
+    [[ "$BAR_LENGTH" == .* ]] && BAR_LENGTH="0"
+    BAR=$(printf '█%.0s' $(seq 1 $BAR_LENGTH))
+    BAR="${BAR}$(printf '░%.0s' $(seq 1 $((20 - BAR_LENGTH))))"
+
+    printf "  %-12s %2d calls → \$%-8s (%3d%%)  %s\n" "$MODEL_NAME:" "$MODEL_REQ" "$MODEL_COST" "$MODEL_PCT" "$BAR"
+  done
+
+  # Model switching suggestion
+  if [ "$MODEL_COUNT" -eq 1 ]; then
+    PRIMARY_MODEL="${MODEL_NAMES[0]}"
+    if [[ "$PRIMARY_MODEL" == *"Opus"* ]]; then
+      HAIKU_COST=$(echo "scale=2; $ESTIMATE_TOTAL_COST * 0.20" | bc)
+      [[ "$HAIKU_COST" == .* ]] && HAIKU_COST="0$HAIKU_COST"
+      echo ""
+      echo "  💡 Switching Opus → Haiku could save ~\$$(echo "scale=2; $ESTIMATE_TOTAL_COST - $HAIKU_COST" | bc) (80% reduction)"
+    elif [[ "$PRIMARY_MODEL" == *"Sonnet"* ]]; then
+      HAIKU_COST=$(echo "scale=2; $ESTIMATE_TOTAL_COST * 0.33" | bc)
+      [[ "$HAIKU_COST" == .* ]] && HAIKU_COST="0$HAIKU_COST"
+      echo ""
+      echo "  💡 Switching Sonnet → Haiku could save ~\$$(echo "scale=2; $ESTIMATE_TOTAL_COST - $HAIKU_COST" | bc) (67% reduction)"
+    fi
+  fi
+  echo ""
+fi
+
+# ============================================================================
+# COST DRIVERS BREAKDOWN
+# ============================================================================
+
+echo "💵 COST DRIVERS"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Calculate percentages
+if (( $(echo "$ESTIMATE_TOTAL_COST > 0" | bc -l) )); then
+  INPUT_PCT=$(echo "scale=0; 100 * $TOTAL_INPUT_COST / $ESTIMATE_TOTAL_COST" | bc)
+  OUTPUT_PCT=$(echo "scale=0; 100 * $TOTAL_OUTPUT_COST / $ESTIMATE_TOTAL_COST" | bc)
+  CACHE_WRITE_PCT=$(echo "scale=0; 100 * $TOTAL_CACHE_WRITE_COST / $ESTIMATE_TOTAL_COST" | bc)
+  CACHE_READ_PCT=$(echo "scale=0; 100 * $TOTAL_CACHE_READ_COST / $ESTIMATE_TOTAL_COST" | bc)
+
+  [[ "$INPUT_PCT" == .* ]] && INPUT_PCT="0"
+  [[ "$OUTPUT_PCT" == .* ]] && OUTPUT_PCT="0"
+  [[ "$CACHE_WRITE_PCT" == .* ]] && CACHE_WRITE_PCT="0"
+  [[ "$CACHE_READ_PCT" == .* ]] && CACHE_READ_PCT="0"
+else
+  INPUT_PCT=0
+  OUTPUT_PCT=0
+  CACHE_WRITE_PCT=0
+  CACHE_READ_PCT=0
+fi
+
+# Create visual bars
+INPUT_BAR_LEN=$(echo "scale=0; $INPUT_PCT / 5" | bc)
+OUTPUT_BAR_LEN=$(echo "scale=0; $OUTPUT_PCT / 5" | bc)
+CACHE_W_BAR_LEN=$(echo "scale=0; $CACHE_WRITE_PCT / 5" | bc)
+CACHE_R_BAR_LEN=$(echo "scale=0; $CACHE_READ_PCT / 5" | bc)
+
+[[ "$INPUT_BAR_LEN" == .* ]] && INPUT_BAR_LEN="0"
+[[ "$OUTPUT_BAR_LEN" == .* ]] && OUTPUT_BAR_LEN="0"
+[[ "$CACHE_W_BAR_LEN" == .* ]] && CACHE_W_BAR_LEN="0"
+[[ "$CACHE_R_BAR_LEN" == .* ]] && CACHE_R_BAR_LEN="0"
+
+INPUT_BAR=$(printf '█%.0s' $(seq 1 $INPUT_BAR_LEN))$(printf '░%.0s' $(seq 1 $((20 - INPUT_BAR_LEN))))
+OUTPUT_BAR=$(printf '█%.0s' $(seq 1 $OUTPUT_BAR_LEN))$(printf '░%.0s' $(seq 1 $((20 - OUTPUT_BAR_LEN))))
+CACHE_W_BAR=$(printf '█%.0s' $(seq 1 $CACHE_W_BAR_LEN))$(printf '░%.0s' $(seq 1 $((20 - CACHE_W_BAR_LEN))))
+CACHE_R_BAR=$(printf '█%.0s' $(seq 1 $CACHE_R_BAR_LEN))$(printf '░%.0s' $(seq 1 $((20 - CACHE_R_BAR_LEN))))
+
+printf "  %-18s \$%-8s (%3d%%)  %s\n" "Input tokens:" "$TOTAL_INPUT_COST" "$INPUT_PCT" "$INPUT_BAR"
+printf "  %-18s \$%-8s (%3d%%)  %s\n" "Output tokens:" "$TOTAL_OUTPUT_COST" "$OUTPUT_PCT" "$OUTPUT_BAR"
+printf "  %-18s \$%-8s (%3d%%)  %s\n" "Cache writes:" "$TOTAL_CACHE_WRITE_COST" "$CACHE_WRITE_PCT" "$CACHE_W_BAR"
+printf "  %-18s \$%-8s (%3d%%)  %s\n" "Cache reads:" "$TOTAL_CACHE_READ_COST" "$CACHE_READ_PCT" "$CACHE_R_BAR"
+
+# Cost driver insights
+echo ""
+if [ "$OUTPUT_PCT" -gt 60 ]; then
+  echo "  ⚠️  Output tokens are your biggest cost driver (${OUTPUT_PCT}%) - consider asking for brevity"
+elif [ "$INPUT_PCT" -gt 60 ]; then
+  echo "  ⚠️  Input tokens are your biggest cost driver (${INPUT_PCT}%) - context may be large"
+elif [ "$CACHE_WRITE_PCT" -gt 40 ]; then
+  echo "  ⚠️  Cache writes are expensive (${CACHE_WRITE_PCT}%) - consider using /clear if cache not helping"
+else
+  echo "  ✓ Balanced cost distribution across token types"
+fi
+echo ""
+
+# ============================================================================
+# EFFICIENCY METRICS
+# ============================================================================
+
+echo "⚡ EFFICIENCY METRICS"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  Output/Input Ratio: ${OUTPUT_INPUT_RATIO}x"
+if (( $(echo "$OUTPUT_INPUT_RATIO > 3.0" | bc -l) )); then
+  echo "                      → AI is verbose - consider asking for brevity"
+elif (( $(echo "$OUTPUT_INPUT_RATIO < 1.0" | bc -l) )); then
+  echo "                      → AI is concise - good efficiency"
+else
+  echo "                      → Typical verbosity level"
+fi
+echo ""
+echo "  Cache Hit Rate:     ${CACHE_EFFICIENCY}%"
+if (( $(echo "$CACHE_EFFICIENCY >= 70" | bc -l) )); then
+  echo "                      → Excellent - stay in session (saved ~\$$CACHE_READ_COST_SAVED)"
+elif (( $(echo "$CACHE_EFFICIENCY >= 40" | bc -l) )); then
+  echo "                      → Moderate - session working OK"
+elif [ "$TOTAL_CACHE_TOKENS" -gt 0 ]; then
+  echo "                      → Low - consider /clear to refresh"
+else
+  echo "                      → No cache data yet"
+fi
+echo ""
+printf "  Cost per Token:     \$%.8f\n" "$COST_PER_TOKEN"
 echo ""
 
 # ============================================================================
 # USAGE SECTION - Different for API vs Subscription
 # ============================================================================
 
-# USAGE SECTION - Show transcript estimates for all users
 if [ "$BILLING_MODE" = "Sub" ]; then
   USAGE_HEADER="📊 SESSION USAGE ESTIMATE"
   USAGE_NOTE="  📌 Your usage is included in subscription - no charges."
@@ -655,29 +990,61 @@ fi
 echo ""
 
 # ============================================================================
-# INSIGHTS & RECOMMENDATIONS - Same for both billing modes
+# SMART RECOMMENDATIONS (Prioritized by savings)
 # ============================================================================
 
-echo "💡 INSIGHTS & RECOMMENDATIONS"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "$INSIGHTS"
-if [ -n "$RECOMMENDATIONS" ]; then
-  echo "  Smart actions:"
-  echo -e "$RECOMMENDATIONS"
+if [ ${#RECOMMENDATIONS[@]} -gt 0 ]; then
+  echo "🎯 TOP OPTIMIZATION ACTIONS (by potential savings)"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  DISPLAY_COUNT=$((${#RECOMMENDATIONS[@]} < 3 ? ${#RECOMMENDATIONS[@]} : 3))
+  for ((i=0; i<DISPLAY_COUNT; i++)); do
+    REC_NUM=$((i + 1))
+    REC_TEXT="${RECOMMENDATIONS[i]}"
+    REC_SAVE="${REC_SAVINGS[i]}"
+
+    if (( $(echo "$REC_SAVE > 0.01" | bc -l) )); then
+      SAVINGS_TEXT="Save ~\$$REC_SAVE/10 msgs"
+      REDUCTION_PCT=$(echo "scale=0; 100 * $REC_SAVE / ($COST_PER_MESSAGE * 10)" | bc)
+      [[ "$REDUCTION_PCT" == .* ]] && REDUCTION_PCT="0"
+      if [ "$REDUCTION_PCT" -gt 0 ]; then
+        SAVINGS_TEXT="$SAVINGS_TEXT (${REDUCTION_PCT}% reduction)"
+      fi
+    else
+      SAVINGS_TEXT="Optimize session health"
+    fi
+
+    echo "  $REC_NUM. $REC_TEXT"
+    echo "     → $SAVINGS_TEXT"
+  done
+  echo ""
+else
+  echo "💡 INSIGHTS"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "  ✓ Session efficiency looks good - continue with current workflow"
+  echo ""
 fi
-echo ""
+
+# ============================================================================
+# TRAJECTORY
+# ============================================================================
 
 echo "📈 TRAJECTORY"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  At current rate (\$${COST_PER_MESSAGE}/msg):"
-echo "    • Next 10 messages: $PROJECTED_NEXT_10"
 if [ "$USER_MESSAGES" -gt 0 ]; then
+  PROJECTED_10=$(echo "scale=2; $COST_PER_MESSAGE * 10" | bc)
+  [[ "$PROJECTED_10" == .* ]] && PROJECTED_10="0$PROJECTED_10"
+  echo "    • Next 10 messages: ~\$$PROJECTED_10"
+
   HOURLY_MSGS=$(echo "scale=0; 60 / ($USER_MESSAGES / 1)" | bc 2>/dev/null || echo "N/A")
   if [ "$HOURLY_MSGS" != "N/A" ] && [ "$HOURLY_MSGS" -gt 0 ]; then
     HOURLY_COST=$(echo "scale=2; $COST_PER_MESSAGE * $HOURLY_MSGS" | bc)
     [[ "$HOURLY_COST" == .* ]] && HOURLY_COST="0$HOURLY_COST"
     echo "    • Projected hourly rate: ~\$$HOURLY_COST at current pace"
   fi
+else
+  echo "    • Next 10 messages: N/A (no messages yet)"
 fi
 echo ""
 

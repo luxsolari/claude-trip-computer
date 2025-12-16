@@ -1,0 +1,10 @@
+# MCP directories
+.serena/
+# Editor directories
+.vscode/
+.idea/
+.cursor/
+.windsurf/
+# AI assistant directories
+.claude/
+.claude/*

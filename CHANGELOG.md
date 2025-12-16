@@ -7,6 +7,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2025-12-16
+
+### Fixed
+- **Locale warning**: Removed `en_US.UTF-8` locale requirement that caused warnings on systems without it installed
+  - Changed from `LC_NUMERIC=en_US.UTF-8` to `LC_NUMERIC=C` (universally available)
+  - Prevents "setlocale: LC_NUMERIC: cannot change locale" warning on WSL and minimal Linux installations
+  - No functional impact - number formatting still works correctly
+
+## [0.5.0] - 2025-12-16
+
+### Added - Major Trip Computer Enhancements
+- **Session Health Score** (0-100): Automated health assessment based on cache efficiency, cost per message, and context growth
+  - 5-star rating system with clear health status (Excellent/Good/Fair/Poor/Critical)
+  - Detailed breakdown showing which factors contribute to score
+- **Model Mix Visibility**: Shows which models were used and their cost contribution
+  - Visual percentage bars for each model
+  - Request count per model
+  - Smart model switching suggestions (e.g., "Switching Sonnet → Haiku could save $X (67% reduction)")
+- **Cost Drivers Breakdown**: Shows exactly where costs come from with percentages and visual bars
+  - Input tokens, output tokens, cache writes, cache reads
+  - Context-aware insights (e.g., "Output tokens are your biggest cost driver")
+- **Efficiency Metrics Section**: Advanced performance analytics
+  - Output/Input ratio with verbosity assessment
+  - Cache hit rate with savings amount
+  - Cost per token for transparency
+- **Smart Prioritized Recommendations**: Top 3 optimization actions ranked by potential savings
+  - Calculates actual dollar savings for next 10 messages
+  - Shows percentage reduction for each recommendation
+  - Examples: "Switch to Haiku for simple tasks → Save ~$0.60/10 msgs (75% reduction)"
+- **Enhanced Visual Hierarchy**: Improved readability and scannability
+  - Quick summary bar showing health, trend, and action
+  - Cost trend indicator (Rising ➚ / Stable ➡️ / Falling ➘)
+  - Clear section headers with visual separators
+
+### Changed
+- **Trip Computer Layout**: Reorganized for better information flow
+  - Quick Summary → Health Score → Model Mix → Cost Drivers → Efficiency → Usage → Recommendations → Trajectory
+  - Emphasis on actionable insights over raw numbers
+- **Recommendation System**: Complete rewrite from generic to data-driven
+  - Recommendations now sorted by potential savings (highest impact first)
+  - Each recommendation shows specific dollar savings and percentage reduction
+  - Based on actual session patterns (output verbosity, model usage, cache performance, context growth)
+- **Version Display**: Trip computer header now shows version number for troubleshooting
+
+### Technical
+- Increased script size from 310 to 677 lines to add advanced analytics
+- Added bubble sort algorithm for recommendation prioritization
+- Implemented session health scoring algorithm (40 pts cache + 30 pts cost + 30 pts context)
+- Added trend analysis by comparing early vs late message costs
+- Enhanced model detection with friendly names (e.g., "Sonnet 4.5" instead of full model ID)
+- Added cost component breakdown tracking (input/output/cache write/cache read)
+
+### Developer Value
+This release transforms `/trip-computer` from a data display into an actionable analytics dashboard. Developers can now:
+- Instantly assess session health with a single score
+- Identify which models and token types are driving costs
+- Get specific, prioritized recommendations with dollar savings
+- Understand efficiency trends without manual calculation
+
 ## [0.4.2] - 2025-12-16
 
 ### Fixed

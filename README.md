@@ -1,8 +1,8 @@
 # Claude Code Session Stats Tracking
 
-**Version 0.4.2** | [Changelog](CHANGELOG.md)
+**Version 0.5.1** | [Changelog](CHANGELOG.md)
 
-Real-time cost tracking and analytics for your Claude Code sessions.
+Real-time cost tracking and advanced analytics for your Claude Code sessions.
 
 ## Quick Install
 
@@ -37,15 +37,17 @@ Or when agents are working:
 ```
 
 ### Trip Computer (`/trip-computer`)
-**Insight-focused analytics based on transcript data:**
+**Advanced analytics dashboard with health scoring and optimization:**
 
 **What You Get:**
+- 📈 **Session Health Score** (0-100) - Automated health assessment with 5-star rating
+- 🤖 **Model Mix Breakdown** - See which models you used and their cost contribution
+- 💵 **Cost Drivers Analysis** - Visual breakdown showing what's expensive (input/output/cache)
+- ⚡ **Efficiency Metrics** - Output/input ratio, cache hit rate, cost per token
+- 🎯 **Prioritized Recommendations** - Top 3 actions ranked by potential savings (e.g., "Save $0.60/10 msgs")
 - 📊 **Best-effort cost estimates** from session transcript (typically within 10% of actual)
-- ⚡ **Cache Performance** - Efficiency percentage and savings calculations
-- ⚠️ **Context Growth Warnings** - When to use `/clear` for better performance
-- 💰 **Cost Optimization Tips** - Model recommendations, prompt improvements
 - 📈 **Trajectory Projections** - Next 10 messages, hourly rate estimates
-- 💡 **Smart Recommendations** - Context-aware actionable suggestions
+- ⚠️ **Context Growth Warnings** - When to use `/clear` for better performance
 
 **For API Users:**
 - Reminds you to run `/cost` separately for official billing comparison
@@ -57,16 +59,19 @@ Or when agents are working:
 
 ## Features
 
+✅ **Session health scoring** (NEW v0.5.0) - 0-100 automated assessment with 5-star rating
+✅ **Cost drivers breakdown** (NEW v0.5.0) - Visual analysis of what's driving costs (input/output/cache)
+✅ **Model mix visibility** (NEW v0.5.0) - See which models used and switching suggestions
+✅ **Efficiency metrics** (NEW v0.5.0) - Output/input ratio, cache hit rate, cost per token
+✅ **Prioritized recommendations** (NEW v0.5.0) - Top 3 actions ranked by dollar savings
 ✅ **Billing mode detection** - Adapts messaging for API (💳) or Subscription (📅) users
 ✅ **Cache efficiency tracking** - Real-time cache performance indicator (⚡ X% eff)
 ✅ **Best-effort estimates** - Transcript-based calculations typically within 10% of actual costs
 ✅ **Model-aware pricing** - All versions: Opus 3/4/4.5, Sonnet 3.7/4/4.5, Haiku 3/3.5/4.5
 ✅ **Accurate cache pricing** - Model-specific multipliers (including Haiku 3 exception)
 ✅ **Agent activity indicator** - Shows when sub-agents are running
-✅ **Accurate estimates** - Typically within 10% of `/cost` command (validated in trip computer)
 ✅ **Session-level tracking** - Know what each coding session costs
 ✅ **Real-time updates** - Status line refreshes automatically
-✅ **Actionable insights** - Smart recommendations based on session patterns
 
 ## Why This is Valuable
 
