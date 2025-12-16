@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2025-12-16
+
+### Fixed
+- **Status line not updating**: Fixed issue where status line showed zeros instead of real session data
+  - Root cause: Script fallback logic was removed, causing it to exit early when Claude Code didn't pass session ID via stdin
+  - Solution: Restored fallback logic to find most recent transcript when no session ID provided
+  - Status line now correctly displays real-time stats from the current session
+
 ## [0.4.1] - 2025-12-16
 
 ### Fixed

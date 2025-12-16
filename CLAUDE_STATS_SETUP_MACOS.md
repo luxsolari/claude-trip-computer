@@ -82,7 +82,7 @@ Create the file `~/.claude/hooks/brief-stats.sh`:
 ```bash
 cat > ~/.claude/hooks/brief-stats.sh << 'EOF'
 # Brief session statistics displayed in the status line
-# Claude Code Session Stats - Version 0.4.0
+# Claude Code Session Stats - Version 0.4.2
 
 # Force C locale for consistent number formatting
 export LC_NUMERIC=C
@@ -322,7 +322,7 @@ cat > ~/.claude/hooks/show-session-stats.sh << 'EOF'
 set -e
 
 # Helper script to display session statistics for current or specified session
-# Claude Code Session Stats - Version 0.4.0
+# Claude Code Session Stats - Version 0.4.2
 # Usage: ./show-session-stats.sh [session_id]
 
 # If session_id provided, use it; otherwise find the most recent session

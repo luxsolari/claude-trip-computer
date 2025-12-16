@@ -139,7 +139,7 @@ echo "Installing scripts..."
 cat > ~/.claude/hooks/brief-stats.sh << 'SCRIPT_EOF'
 #!/bin/bash
 # Brief session statistics displayed in the status line
-# Claude Code Session Stats - Version 0.4.0
+# Claude Code Session Stats - Version 0.4.2
 
 # Force C locale for consistent number formatting
 export LC_NUMERIC=C
@@ -171,8 +171,8 @@ if [ -d "$TRANSCRIPT_DIR" ]; then
   for agent_file in "$TRANSCRIPT_DIR"/agent-*.jsonl; do
     # Check if file exists (glob may not match anything)
     if [ -f "$agent_file" ]; then
-      # Get file modification time (macOS uses -f, Linux uses -c)
-      FILE_MTIME=$(stat -f %m "$agent_file" 2>/dev/null || stat -c %Y "$agent_file" 2>/dev/null || echo 0)
+      # Get file modification time (Linux uses -c, macOS uses -f)
+      FILE_MTIME=$(stat -c %Y "$agent_file" 2>/dev/null || stat -f %m "$agent_file" 2>/dev/null || echo 0)
       AGE=$((NOW - FILE_MTIME))
 
       # Multi-criteria check for active agents:
@@ -180,14 +180,14 @@ if [ -d "$TRANSCRIPT_DIR" ]; then
       # 2. File size > 100 bytes (not just init/empty file)
       # 3. File is actively growing (check size twice with small delay)
       if [ "$AGE" -lt 3 ]; then
-        # Get file size (macOS uses -f %z, Linux uses -c %s)
-        FILE_SIZE_1=$(stat -f %z "$agent_file" 2>/dev/null || stat -c %s "$agent_file" 2>/dev/null || echo 0)
+        # Get file size (Linux uses -c %s, macOS uses -f %z)
+        FILE_SIZE_1=$(stat -c %s "$agent_file" 2>/dev/null || stat -f %z "$agent_file" 2>/dev/null || echo 0)
 
         # Check if file has meaningful content (> 100 bytes)
         if [ "$FILE_SIZE_1" -gt 100 ]; then
           # Wait briefly and check if file is still growing (active write)
           sleep 0.1
-          FILE_SIZE_2=$(stat -f %z "$agent_file" 2>/dev/null || stat -c %s "$agent_file" 2>/dev/null || echo 0)
+          FILE_SIZE_2=$(stat -c %s "$agent_file" 2>/dev/null || stat -f %z "$agent_file" 2>/dev/null || echo 0)
 
           # If file grew, it's actively being written to
           if [ "$FILE_SIZE_2" -gt "$FILE_SIZE_1" ]; then
@@ -205,27 +205,37 @@ if [ -d "$TRANSCRIPT_DIR" ]; then
   fi
 fi
 
+# Load billing mode from config file (needed for zeroed stats display)
+CONFIG_FILE="$HOME/.claude/hooks/.stats-config"
+if [ -f "$CONFIG_FILE" ]; then
+  source "$CONFIG_FILE"
+else
+  # Fallback to defaults if config doesn't exist
+  BILLING_MODE="API"
+  BILLING_ICON="💳"
+fi
+
 # If we have an active session ID, use it directly
 if [ -n "$ACTIVE_SESSION_ID" ]; then
   TRANSCRIPT_PATH="$TRANSCRIPT_DIR/${ACTIVE_SESSION_ID}.jsonl"
 
   # If the transcript doesn't exist yet (new session), show zeroed stats
   if [ ! -f "$TRANSCRIPT_PATH" ]; then
-    echo "💬 0 msgs | 🔧 0 tools | 🎯 0 tok | 💰 \$0.0000"
+    echo "💬 0 msgs | 🔧 0 tools | 🎯 0 tok | ⚡ 0% eff | $BILLING_ICON ~\$0.0000 (\$0.00/msg) | 📊 /trip-computer"
     exit 0
   fi
 else
-  # No active session - check if there's a recent transcript
+  # No active session ID - fall back to most recent transcript
   if [ -d "$TRANSCRIPT_DIR" ]; then
-    TRANSCRIPT_PATH=$(ls -t "$TRANSCRIPT_DIR"/*.jsonl 2>/dev/null | head -1)
+    TRANSCRIPT_PATH=$(ls -t "$TRANSCRIPT_DIR"/*.jsonl 2>/dev/null | grep -v agent | head -1)
     if [ -z "$TRANSCRIPT_PATH" ]; then
       # No transcripts exist - show zeroed stats
-      echo "💬 0 msgs | 🔧 0 tools | 🎯 0 tok | 💰 \$0.0000"
+      echo "💬 0 msgs | 🔧 0 tools | 🎯 0 tok | ⚡ 0% eff | $BILLING_ICON ~\$0.0000 (\$0.00/msg) | 📊 /trip-computer"
       exit 0
     fi
   else
     # New directory - show zeroed stats
-    echo "💬 0 msgs | 🔧 0 tools | 🎯 0 tok | 💰 \$0.0000"
+    echo "💬 0 msgs | 🔧 0 tools | 🎯 0 tok | ⚡ 0% eff | $BILLING_ICON ~\$0.0000 (\$0.00/msg) | 📊 /trip-computer"
     exit 0
   fi
 fi
@@ -288,16 +298,6 @@ elif [ $TOTAL_TOKENS -ge 1000 ]; then
 else
   # Less than 1000
   FORMATTED_TOKENS="$TOTAL_TOKENS"
-fi
-
-# Load billing mode from config file
-CONFIG_FILE="$HOME/.claude/hooks/.stats-config"
-if [ -f "$CONFIG_FILE" ]; then
-  source "$CONFIG_FILE"
-else
-  # Fallback to defaults if config doesn't exist
-  BILLING_MODE="API"
-  BILLING_ICON="💳"
 fi
 
 # Helper function to get pricing for a model
@@ -698,13 +698,12 @@ cat > ~/.claude/commands/trip-computer.md << 'COMMAND_EOF'
 description: Display trip computer analytics for the current session (rate, efficiency, cost drivers, recommendations)
 ---
 
-Execute the session statistics script and display its output directly without any additional commentary or analysis:
+Execute the session statistics script and display its output directly in your message text (not in a code block) so it's immediately visible without requiring expansion:
 
-```bash
-~/.claude/hooks/show-session-stats.sh
-```
-
-Output the script result as-is in a code block. Do not add summaries, highlights, or interpretations.
+1. Run: ~/.claude/hooks/show-session-stats.sh
+2. Capture the output
+3. Display the full output as plain text in your response
+4. Do not add any commentary, analysis, or interpretation - just show the trip computer output
 COMMAND_EOF
 
 echo "✓ Created /trip-computer command"

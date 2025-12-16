@@ -1,6 +1,6 @@
 # Claude Code Session Stats Tracking
 
-**Version 0.4.0** | [Changelog](CHANGELOG.md)
+**Version 0.4.2** | [Changelog](CHANGELOG.md)
 
 Real-time cost tracking and analytics for your Claude Code sessions.
 

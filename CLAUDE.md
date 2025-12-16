@@ -3,7 +3,7 @@
 ## Project Overview
 
 **Name:** Claude Code Session Stats Tracking
-**Version:** 0.4.0 (see [CHANGELOG.md](CHANGELOG.md) for version history)
+**Version:** 0.4.2 (see [CHANGELOG.md](CHANGELOG.md) for version history)
 **Purpose:** Real-time cost tracking and analytics system for Claude Code sessions
 **Type:** CLI utility / Developer tool
 **Status:** Development phase (0.x.x versions) - Insight-focused analytics with billing mode detection
@@ -55,9 +55,12 @@ claude-session-stats/
 **Location:** `~/.claude/hooks/brief-stats.sh`
 **Purpose:** Displays real-time stats in Claude Code status bar
 **Output Format:** `💬 X msgs | 🔧 X tools | 🎯 XM tok | ⚡ X% eff | 💳 ~$X.XX ($X.XX/msg) | 📊 /trip-computer`
-**Version:** 0.4.0 - Added cache efficiency indicator and trip computer pointer
+**Version:** 0.4.2 - Fixed status line update issue; added cache efficiency and trip computer pointer
 
-**New in 0.4.0:**
+**New in 0.4.2:**
+- **Fixed:** Status line now correctly updates with real session data when Claude Code doesn't pass session ID via stdin
+
+**Features from 0.4.0:**
 - **⚡ X% eff** - Cache efficiency percentage for immediate performance visibility
 - **($X.XX/msg)** - Cost per message for trajectory awareness (retained from v0.2.0)
 - **📊 /trip-computer** - Subtle reminder that detailed analytics are available
@@ -78,7 +81,7 @@ claude-session-stats/
 **Location:** `~/.claude/hooks/show-session-stats.sh`
 **Purpose:** Insight-focused analytics dashboard based on transcript data
 **Triggered by:** `/trip-computer` slash command
-**Version:** 0.4.0 - Enhanced with cache efficiency and insights
+**Version:** 0.4.2 - Enhanced with cache efficiency and insights
 
 **Core Functionality:**
 - Analyzes session transcript to calculate best-effort cost estimates
@@ -514,7 +517,7 @@ For questions or issues with this tracking system, refer to:
 
 ---
 
-**Last Updated:** 2025-12-15 (v0.4.0 - Insight-focused analytics with billing mode detection)
+**Last Updated:** 2025-12-16 (v0.4.2 - Fixed status line update issue)
 **Claude Code Version Compatibility:** v1.0+
 **Status:** Stable, production-ready
 - all changes proposed in this project should be applied both on the status line and the custom command, along with updating installer script and relevant documentation / guides.
