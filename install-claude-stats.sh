@@ -692,11 +692,6 @@ SCRIPT_EOF
 chmod +x ~/.claude/hooks/show-session-stats.sh
 echo "✓ Installed show-session-stats.sh (detailed stats)"
 
-SCRIPT_EOF
-
-chmod +x ~/.claude/hooks/show-session-stats.sh
-echo "✓ Installed show-session-stats.sh (detailed stats)"
-
 # Create slash command
 cat > ~/.claude/commands/trip-computer.md << 'COMMAND_EOF'
 ---

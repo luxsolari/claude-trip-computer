@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2025-12-16
+
+### Fixed
+- **Installer script**: Fixed duplicate SCRIPT_EOF marker and code causing "command not found" error at line 695
+  - Removed duplicate heredoc terminator that was being interpreted as a bash command
+  - Removed duplicate chmod and echo statements
+
 ## [0.4.0] - 2025-12-15
 
 ### Added
