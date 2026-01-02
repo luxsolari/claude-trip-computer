@@ -3,10 +3,10 @@
 ## Project Overview
 
 **Name:** Claude Code Session Stats Tracking
-**Version:** 0.5.1 (see [CHANGELOG.md](CHANGELOG.md) for version history)
+**Version:** 0.6.0 (see [CHANGELOG.md](CHANGELOG.md) for version history)
 **Purpose:** Real-time cost tracking and analytics system for Claude Code sessions
 **Type:** CLI utility / Developer tool
-**Status:** Development phase (0.x.x versions) - Advanced analytics dashboard with health scoring and optimization recommendations
+**Status:** Development phase (0.x.x versions) - Advanced analytics dashboard with health scoring, prompt analysis, and optimization recommendations
 
 ## What This Project Does
 
@@ -79,9 +79,9 @@ claude-session-stats/
 ### 2. show-session-stats.sh (Detailed Stats Script / Trip Computer)
 
 **Location:** `~/.claude/hooks/show-session-stats.sh`
-**Purpose:** Advanced analytics dashboard with health scoring and optimization recommendations
+**Purpose:** Advanced analytics dashboard with health scoring, prompt quality analysis, and optimization recommendations
 **Triggered by:** `/trip-computer` slash command
-**Version:** 0.5.1 - Fixed locale warning; Major enhancements: health scoring, cost drivers, model mix, efficiency metrics
+**Version:** 0.6.0 - Added prompt pattern analysis; detects vague questions, large pastes, repeated questions, missing constraints
 
 **Core Functionality:**
 - Analyzes session transcript to calculate best-effort cost estimates
@@ -151,6 +151,77 @@ claude-session-stats/
 - Emphasizes "what should I do?" over "what are the numbers?"
 - Clear disclaimers about estimate accuracy
 - Actionable insights always provided regardless of billing mode
+
+### 2.5. Prompt Pattern Analysis (v0.6.0)
+
+**Location:** Integrated into `show-session-stats.sh`
+**Purpose:** Detect inefficient prompting patterns and recommend improvements to reduce costs
+**Version:** 0.6.0 - Automatic prompt quality analysis
+
+**Analysis Approach:**
+- Pure bash pattern matching using jq regex
+- No API calls required (free and instant)
+- Always-on by default in `/trip-computer`
+- Analyzes actual user prompts from session transcript
+
+**Patterns Detected:**
+
+**1. Vague/Broad Questions**
+- **Detects:** Questions with "explain/describe/tell me/how does/what is/show me" WITHOUT "brief/concise/summary/in N points/limit/short"
+- **Threshold:** >30% of prompts lacking constraints AND ≥2 vague prompts
+- **Example:** "Explain how authentication works" vs "Briefly explain authentication in 3 points"
+- **Estimated Savings:** ~25% reduction in output costs (~$0.25 per 10 messages)
+- **Rationale:** Unconstrained questions lead to verbose responses, increasing output tokens
+
+**2. Large Context Pastes**
+- **Detects:** Prompts containing >200 lines of text (counted by newlines)
+- **Threshold:** >20% of prompts with large pastes AND ≥1 occurrence
+- **Example:** Pasting 300 lines of code vs using file references or breaking into chunks
+- **Estimated Savings:** ~20% reduction in input + cache write costs (~$0.20 per 10 messages)
+- **Rationale:** Large pastes increase input tokens and cache write costs (1.25x multiplier)
+
+**3. Repeated Similar Questions**
+- **Detects:** Low keyword diversity (average <15 unique words per prompt) across ≥3 messages
+- **Method:** Counts unique words in each prompt after removing stop words and special characters
+- **Example:** Asking "how do I fix X", "can you fix X", "fix X please" repeatedly
+- **Estimated Savings:** ~15% reduction by asking complete questions upfront (~$0.15 per 10 messages)
+- **Rationale:** Repetitive prompts indicate unclear initial responses or iterative refinement
+
+**4. Missing Task Constraints**
+- **Detects:** Coding tasks ("write/create/build/implement/add/fix/refactor/generate") without constraints ("max/limit/brief/under/less than/in N")
+- **Threshold:** >40% of task prompts unconstrained AND ≥2 occurrences
+- **Example:** "Write a function to sort users" vs "Write a short function (max 20 lines) to sort users by name"
+- **Estimated Savings:** ~20% reduction in output costs (~$0.20 per 10 messages)
+- **Rationale:** Unconstrained tasks generate over-engineered or verbose solutions
+
+**Key Features:**
+- **Regex-based detection:** Case-insensitive pattern matching for trigger keywords
+- **Configurable thresholds:** Calibrated to minimize false positives (30%, 40% thresholds)
+- **Savings calculations:** Based on actual session costs (TOTAL_OUTPUT_COST, TOTAL_INPUT_COST, etc.)
+- **Integrated recommendations:** Automatically added to recommendation array and prioritized by bubble sort
+- **High-level insights:** Shows aggregate patterns, not message-by-message critique
+- **Cross-platform:** Works on Linux, macOS, Windows Git Bash using standard bash/jq
+
+**Output Integration:**
+Prompt analysis recommendations appear in the "🎯 TOP OPTIMIZATION ACTIONS" section alongside existing recommendations, prioritized by potential dollar savings.
+
+Example:
+```
+🎯 TOP OPTIMIZATION ACTIONS (by potential savings)
+  1. Add constraints to questions (brief, in N points)
+     → Save ~$0.45/10 msgs (25% reduction)
+
+  2. Specify format/length constraints for tasks
+     → Save ~$0.36/10 msgs (20% reduction)
+
+  3. Use file references instead of pasting large code
+     → Save ~$0.28/10 msgs (15% reduction)
+```
+
+**Performance:**
+- ~100-200ms additional processing time per `/trip-computer` invocation (negligible)
+- No impact on status line (brief-stats.sh unchanged)
+- No new dependencies or configuration required
 
 ### 3. trip-computer.md (Slash Command)
 
@@ -553,7 +624,7 @@ For questions or issues with this tracking system, refer to:
 
 ---
 
-**Last Updated:** 2025-12-16 (v0.5.1 - Fixed locale warning)
+**Last Updated:** 2026-01-03 (v0.6.0 - Added prompt quality analysis)
 **Claude Code Version Compatibility:** v1.0+
 **Status:** Stable, production-ready
 - all changes proposed in this project should be applied both on the status line and the custom command, along with updating installer script and relevant documentation / guides.

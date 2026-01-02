@@ -378,10 +378,11 @@ echo "✓ Installed brief-stats.sh (status line)"
 
 # Create show-session-stats.sh (detailed stats - enhanced "trip computer" version)
 cat > ~/.claude/hooks/show-session-stats.sh << 'SCRIPT_EOF'
+#!/bin/bash
 set -e
 
 # Helper script to display session statistics for current or specified session
-# Claude Code Session Stats - Version 0.5.1
+# Claude Code Session Stats - Version 0.6.0
 # Usage: ./show-session-stats.sh [session_id]
 
 # Force C locale for consistent number formatting (avoids locale warnings on systems without en_US.UTF-8)
@@ -696,6 +697,111 @@ else
 fi
 
 # ============================================================================
+# PROMPT PATTERN ANALYSIS - Detect inefficient prompting patterns
+# ============================================================================
+
+# Extract user prompts for analysis
+USER_PROMPT_ANALYSIS=$(jq -s '[.[] |
+  select(.type == "user" and
+         (.isMeta != true) and
+         (.message.content | type == "string"))]' "$TRANSCRIPT_PATH")
+
+# Pattern 1: Vague/broad questions
+# Detect questions with broad keywords but no constraints
+VAGUE_PROMPTS=$(echo "$USER_PROMPT_ANALYSIS" | jq '[.[] |
+  select(.message.content |
+    test("(?i)(explain|describe|tell me|how does|what is|show me)") and
+    test("(?i)(brief|concise|summary|in \\\\d+ (points|words|lines)|limit|short)") | not
+  )] | length')
+
+VAGUE_PCT=0
+if [ "$USER_MESSAGES" -gt 0 ]; then
+  VAGUE_PCT=$(echo "scale=0; 100 * $VAGUE_PROMPTS / $USER_MESSAGES" | bc)
+  [[ "$VAGUE_PCT" == .* ]] && VAGUE_PCT="0"
+fi
+
+VAGUE_DETECTED=false
+VAGUE_SAVING=0
+if [ "$VAGUE_PCT" -gt 30 ] && [ "$VAGUE_PROMPTS" -ge 2 ]; then
+  VAGUE_DETECTED=true
+  if [ "$USER_MESSAGES" -gt 0 ] && [ $(echo "$TOTAL_OUTPUT_COST > 0" | bc) -eq 1 ]; then
+    VAGUE_SAVING=$(echo "scale=2; $TOTAL_OUTPUT_COST / $USER_MESSAGES * 0.25 * 10" | bc)
+    [[ "$VAGUE_SAVING" == .* ]] && VAGUE_SAVING="0$VAGUE_SAVING"
+  fi
+fi
+
+# Pattern 2: Large context pastes (>200 lines)
+# Detect when users paste large blocks of code/text
+LARGE_PASTE_COUNT=$(echo "$USER_PROMPT_ANALYSIS" | jq '[.[] |
+  select((.message.content | split("\n") | length) > 200)] | length')
+
+LARGE_PASTE_PCT=0
+if [ "$USER_MESSAGES" -gt 0 ]; then
+  LARGE_PASTE_PCT=$(echo "scale=0; 100 * $LARGE_PASTE_COUNT / $USER_MESSAGES" | bc)
+  [[ "$LARGE_PASTE_PCT" == .* ]] && LARGE_PASTE_PCT="0"
+fi
+
+LARGE_PASTE_DETECTED=false
+LARGE_PASTE_SAVING=0
+if [ "$LARGE_PASTE_PCT" -gt 20 ] && [ "$LARGE_PASTE_COUNT" -ge 1 ]; then
+  LARGE_PASTE_DETECTED=true
+  if [ "$USER_MESSAGES" -gt 0 ]; then
+    COMBINED_INPUT_COST=$(echo "scale=4; $TOTAL_INPUT_COST + $TOTAL_CACHE_WRITE_COST" | bc)
+    [[ "$COMBINED_INPUT_COST" == .* ]] && COMBINED_INPUT_COST="0$COMBINED_INPUT_COST"
+    if [ $(echo "$COMBINED_INPUT_COST > 0" | bc) -eq 1 ]; then
+      LARGE_PASTE_SAVING=$(echo "scale=2; $COMBINED_INPUT_COST / $USER_MESSAGES * 0.20 * 10" | bc)
+      [[ "$LARGE_PASTE_SAVING" == .* ]] && LARGE_PASTE_SAVING="0$LARGE_PASTE_SAVING"
+    fi
+  fi
+fi
+
+# Pattern 3: Repeated similar questions (low unique word diversity)
+# Detect when user asks similar questions repeatedly (indicates unclear initial response)
+AVG_UNIQUE_WORDS=$(echo "$USER_PROMPT_ANALYSIS" | jq '
+  if length == 0 then 0 else
+    (map(.message.content |
+         ascii_downcase |
+         gsub("[^a-z0-9 ]"; "") |
+         split(" ") |
+         unique |
+         length) | add) / length
+  end | floor')
+
+REPEATED_DETECTED=false
+REPEATED_SAVING=0
+if [ "$USER_MESSAGES" -ge 3 ] && [ "$AVG_UNIQUE_WORDS" -lt 15 ] && [ "$AVG_UNIQUE_WORDS" -gt 0 ]; then
+  REPEATED_DETECTED=true
+  if [ $(echo "$COST_PER_MESSAGE > 0" | bc) -eq 1 ]; then
+    REPEATED_SAVING=$(echo "scale=2; $COST_PER_MESSAGE * 0.15 * 10" | bc)
+    [[ "$REPEATED_SAVING" == .* ]] && REPEATED_SAVING="0$REPEATED_SAVING"
+  fi
+fi
+
+# Pattern 4: Missing task constraints
+# Detect coding/task requests without format/length specifications
+UNCONSTRAINED_TASKS=$(echo "$USER_PROMPT_ANALYSIS" | jq '[.[] |
+  select(
+    (.message.content | test("(?i)(write|create|build|implement|add|fix|refactor|generate)")) and
+    (.message.content | test("(?i)(max|maximum|limit|under|less than|no more than|exactly|in \\\\d+|brief|concise|short|simple)") | not)
+  )] | length')
+
+UNCONSTRAINED_PCT=0
+if [ "$USER_MESSAGES" -gt 0 ]; then
+  UNCONSTRAINED_PCT=$(echo "scale=0; 100 * $UNCONSTRAINED_TASKS / $USER_MESSAGES" | bc)
+  [[ "$UNCONSTRAINED_PCT" == .* ]] && UNCONSTRAINED_PCT="0"
+fi
+
+UNCONSTRAINED_DETECTED=false
+UNCONSTRAINED_SAVING=0
+if [ "$UNCONSTRAINED_PCT" -gt 40 ] && [ "$UNCONSTRAINED_TASKS" -ge 2 ]; then
+  UNCONSTRAINED_DETECTED=true
+  if [ "$USER_MESSAGES" -gt 0 ] && [ $(echo "$TOTAL_OUTPUT_COST > 0" | bc) -eq 1 ]; then
+    UNCONSTRAINED_SAVING=$(echo "scale=2; $TOTAL_OUTPUT_COST / $USER_MESSAGES * 0.20 * 10" | bc)
+    [[ "$UNCONSTRAINED_SAVING" == .* ]] && UNCONSTRAINED_SAVING="0$UNCONSTRAINED_SAVING"
+  fi
+fi
+
+# ============================================================================
 # GENERATE SMART RECOMMENDATIONS (Prioritized by savings)
 # ============================================================================
 
@@ -751,6 +857,34 @@ if [ "$FIRST_INPUT" -gt 0 ] && [ "$LATEST_INPUT" -gt 0 ]; then
   fi
 fi
 
+# Recommendation 5: Vague prompts
+if [ "$VAGUE_DETECTED" = true ]; then
+  POTENTIAL_SAVING="$VAGUE_SAVING"
+  RECOMMENDATIONS+=("Add constraints to questions (brief, in N points)")
+  REC_SAVINGS+=("$POTENTIAL_SAVING")
+fi
+
+# Recommendation 6: Large pastes
+if [ "$LARGE_PASTE_DETECTED" = true ]; then
+  POTENTIAL_SAVING="$LARGE_PASTE_SAVING"
+  RECOMMENDATIONS+=("Use file references instead of pasting large code")
+  REC_SAVINGS+=("$POTENTIAL_SAVING")
+fi
+
+# Recommendation 7: Repeated questions
+if [ "$REPEATED_DETECTED" = true ]; then
+  POTENTIAL_SAVING="$REPEATED_SAVING"
+  RECOMMENDATIONS+=("Ask complete questions upfront (avoid iterations)")
+  REC_SAVINGS+=("$POTENTIAL_SAVING")
+fi
+
+# Recommendation 8: Unconstrained tasks
+if [ "$UNCONSTRAINED_DETECTED" = true ]; then
+  POTENTIAL_SAVING="$UNCONSTRAINED_SAVING"
+  RECOMMENDATIONS+=("Specify format/length constraints for tasks")
+  REC_SAVINGS+=("$POTENTIAL_SAVING")
+fi
+
 # Sort recommendations by savings (bubble sort for bash compatibility)
 REC_COUNT=${#RECOMMENDATIONS[@]}
 for ((i=0; i<REC_COUNT-1; i++)); do
@@ -803,7 +937,7 @@ fi
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════════════════════════╗"
-echo "║  🚗 TRIP COMPUTER v0.5.1  │  \$$ESTIMATE_TOTAL_COST session  │  ${CACHE_EFFICIENCY}% efficient  ║"
+echo "║  🚗 TRIP COMPUTER v0.6.0  │  \$$ESTIMATE_TOTAL_COST session  │  ${CACHE_EFFICIENCY}% efficient  ║"
 echo "╚══════════════════════════════════════════════════════════════════════════════╝"
 echo ""
 echo "📊 QUICK SUMMARY"
