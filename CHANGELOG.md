@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.8] - 2026-01-03
+
+### Added - Prerequisite Auto-Installation & Windows Batch Installer
+
+**Windows batch installer for seamless Windows experience**
+
+**New Files:**
+- **`install-claude-stats.bat`** - Windows batch wrapper for installation
+  - Double-click installation from Windows Explorer
+  - Auto-detects Git Bash in common installation paths
+  - Detects missing prerequisites (jq, bc)
+  - Auto-installs via Chocolatey if available
+  - Provides clear error messages and installation instructions
+  - Validates installation after completion
+
+**Enhanced bash installer with automatic prerequisite installation:**
+- **Linux**: Auto-installs jq/bc via apt-get, dnf, or pacman
+- **macOS**: Auto-installs jq via Homebrew (bc is pre-installed)
+- **Windows**: Redirects to batch installer for better UX
+- **Interactive prompts**: Asks user permission before installing
+- **Validation**: Verifies successful installation before proceeding
+- **Fallback**: Provides manual installation instructions if auto-install fails
+
+**Benefits:**
+- **Zero-friction Windows setup**: Double-click installation, no bash knowledge required
+- **Automatic dependency management**: No need to manually install jq/bc
+- **Better error handling**: Clear messages guide users through any issues
+- **Cross-platform consistency**: Same great experience on all platforms
+
+**Version:** 0.6.8 (patch - bug fix level, adds convenience features without breaking changes)
+
 ## [0.6.7] - 2026-01-03
 
 ### Changed - Documentation Consolidation

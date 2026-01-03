@@ -1,16 +1,32 @@
 # Claude Code Session Stats Tracking
 
-**Version 0.6.7** | [Changelog](CHANGELOG.md)
+**Version 0.6.8** | [Changelog](CHANGELOG.md)
 
 Real-time cost tracking and advanced analytics for your Claude Code sessions.
 
 ## Quick Install
 
-### Automated (Recommended)
+### Windows Users
+**Double-click installer:**
+```
+install-claude-stats.bat
+```
+- Automatically detects and installs prerequisites (jq, bc)
+- Requires Git for Windows
+
+**Or use bash:**
 ```bash
 ./install-claude-stats.sh
 ```
-**Time:** ~2 minutes | Auto-detects OS, installs everything, tests it
+
+### Linux/macOS Users
+```bash
+./install-claude-stats.sh
+```
+- Automatically detects and installs prerequisites if missing
+- Supports apt-get, dnf, pacman (Linux) and Homebrew (macOS)
+
+**Time:** ~2 minutes | Auto-detects OS, installs prerequisites, configures everything
 
 ### Need Help?
 - **Troubleshooting** → [TROUBLESHOOTING.md](TROUBLESHOOTING.md)

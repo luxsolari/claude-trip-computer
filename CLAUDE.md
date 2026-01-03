@@ -3,7 +3,7 @@
 ## Project Overview
 
 **Name:** Claude Code Session Stats Tracking
-**Version:** 0.6.7 (see [CHANGELOG.md](CHANGELOG.md) for version history)
+**Version:** 0.6.8 (see [CHANGELOG.md](CHANGELOG.md) for version history)
 **Purpose:** Real-time cost tracking and analytics system for Claude Code sessions
 **Type:** CLI utility / Developer tool
 **Status:** Development phase (0.x.x versions) - Advanced analytics dashboard with health scoring, prompt analysis, and optimization recommendations
@@ -24,7 +24,8 @@ This project provides comprehensive session statistics tracking for Claude Code,
 
 ```
 claude-session-stats/
-├── install-claude-stats.sh           # Automated installer (recommended)
+├── install-claude-stats.sh           # Automated installer (Linux/macOS/WSL)
+├── install-claude-stats.bat          # Windows batch wrapper (double-click)
 ├── VERSION                           # Current version number (semver)
 ├── CHANGELOG.md                      # Version history and changes
 ├── README.md                          # Main documentation
@@ -351,13 +352,16 @@ When a request's input tokens (input + cache_creation + cache_read) exceed 200,0
 
 ### Required Tools
 
+**The installers automatically detect and install missing prerequisites.**
+
 1. **jq** - JSON processor
-   - Linux: `sudo apt-get install jq` or `sudo dnf install jq`
-   - macOS: `brew install jq`
-   - Windows: Git Bash includes it, or download from stedolan.github.io/jq/
+   - Auto-installed by installer on Linux (apt-get/dnf/pacman) and macOS (brew)
+   - Windows: Auto-installed via Chocolatey by batch installer
+   - Manual: See TROUBLESHOOTING.md
 
 2. **bc** - Calculator
-   - Usually pre-installed on Linux/macOS
+   - Auto-installed by installer on Linux
+   - Usually pre-installed on macOS
    - Included with Git Bash on Windows
 
 3. **bash** - Shell
@@ -371,24 +375,39 @@ When a request's input tokens (input + cache_creation + cache_read) exceed 200,0
 - Uses BSD sed (not GNU sed) - scripts are compatible
 - Default bash 3.2.57 - scripts work fine
 - Supports emoji natively in Terminal.app and iTerm2
+- Requires Homebrew for auto-installing jq
 
 **Linux:**
 - GNU tools standard
 - Works on Ubuntu, Debian, RHEL, Fedora, Arch
+- Auto-installs prerequisites via native package manager
 
 **Windows:**
-- Requires WSL or Git Bash
-- Git Bash recommended
+- Requires Git Bash (installer checks for it)
+- Use `install-claude-stats.bat` for best experience
+- Requires Chocolatey for auto-installing jq (installer provides instructions)
 
 ## How to Use
 
 ### Installation
 
 **Automated (Recommended):**
+
+**Windows:**
+```
+# Double-click:
+install-claude-stats.bat
+
+# Or use bash:
+./install-claude-stats.sh
+```
+
+**Linux/macOS:**
 ```bash
 ./install-claude-stats.sh
 ```
-Time: ~2 minutes
+
+Time: ~2 minutes | Auto-installs prerequisites (jq, bc) if needed
 
 **Manual:**
 See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Manual Installation section
@@ -587,12 +606,13 @@ FILE_MTIME=$(stat -f %m "$agent_file" 2>/dev/null || stat -c %Y "$agent_file" 2>
 ## Distribution
 
 ### Minimum Package
-- `install-claude-stats.sh`
+- `install-claude-stats.sh` (Linux/macOS/WSL)
+- `install-claude-stats.bat` (Windows)
 - `README.md`
 - `TROUBLESHOOTING.md`
 
 ### Complete Package
-- All core files (installer + README + TROUBLESHOOTING + CLAUDE.md + CHANGELOG)
+- All core files (installers + README + TROUBLESHOOTING + CLAUDE.md + CHANGELOG)
 
 ### Sharing Instructions
 ```
@@ -821,7 +841,7 @@ For questions or issues with this tracking system, refer to:
 
 ---
 
-**Last Updated:** 2026-01-03 (v0.6.7 - Consolidated 3 manual setup guides into TROUBLESHOOTING.md)
+**Last Updated:** 2026-01-03 (v0.6.8 - Added Windows batch installer & prerequisite auto-installation)
 **Claude Code Version Compatibility:** v1.0+
 **Status:** Stable, production-ready
 - all changes proposed in this project should be applied both on the status line and the custom command, along with updating installer script and relevant documentation / guides.

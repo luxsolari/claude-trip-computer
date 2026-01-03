@@ -1,6 +1,6 @@
 # Troubleshooting & Manual Installation Guide
 
-**Version 0.6.7** | [Back to README](README.md)
+**Version 0.6.8** | [Back to README](README.md)
 
 This guide helps you troubleshoot common issues and provides manual installation instructions if needed.
 
@@ -114,17 +114,34 @@ BILLING_ICON="📅"     # or "💳"
 
 **Symptoms**: Scripts fail with "command not found"
 
-**Solution**:
+**Solution (Automatic)**:
+```bash
+# Linux/macOS: Run installer, it will auto-install
+./install-claude-stats.sh
+
+# Windows: Use batch installer
+install-claude-stats.bat
+```
+
+**Solution (Manual)**:
 ```bash
 # Linux
 sudo apt-get install jq bc    # Debian/Ubuntu
 sudo dnf install jq bc         # Fedora/RHEL
+sudo pacman -S jq bc          # Arch
 
 # macOS
-brew install jq bc
+brew install jq               # bc is pre-installed
 
-# Windows Git Bash
-# jq usually included; bc available via Git Bash
+# Windows
+choco install jq              # via Chocolatey
+
+# Windows - bc manual install (if not included with Git Bash)
+# See: https://stackoverflow.com/a/57787863/32131291
+# Options:
+# 1. Install MSYS2, run 'pacman -S bc', copy bc.exe to Git\usr\bin
+# 2. Download bc package from https://packages.msys2.org/packages/bc
+#    Extract with 7-Zip and copy bc.exe to Git\usr\bin
 ```
 
 ---
@@ -180,9 +197,48 @@ grep "Version" ~/.claude/hooks/brief-stats.sh
 
 ## Manual Installation (Advanced)
 
-**⚠️ Warning**: The automated installer (`./install-claude-stats.sh`) is strongly recommended. Manual installation is error-prone and harder to maintain.
+**⚠️ Warning**: The automated installer is strongly recommended. It handles:
+- Prerequisite detection and installation
+- OS-specific configurations
+- Proper permissions
+- Configuration file generation
 
 If you must install manually (e.g., installer fails, custom modifications needed):
+
+### Step 0: Install Prerequisites
+
+**Automated (Recommended)**:
+```bash
+# Linux/macOS
+./install-claude-stats.sh
+# Installer will detect missing packages and offer to install them
+
+# Windows
+install-claude-stats.bat
+# Batch file will detect missing packages and use Chocolatey
+```
+
+**Manual Installation**:
+```bash
+# Linux - Debian/Ubuntu
+sudo apt-get update
+sudo apt-get install -y jq bc
+
+# Linux - Fedora/RHEL
+sudo dnf install -y jq bc
+
+# Linux - Arch
+sudo pacman -S jq bc
+
+# macOS
+brew install jq
+# bc is pre-installed on macOS
+
+# Windows
+# Install Chocolatey first: https://chocolatey.org/install
+choco install jq
+# bc is included with Git Bash
+```
 
 ### Step 1: Create Directory Structure
 
@@ -320,8 +376,19 @@ brew install jq    # Usually already present
 
 **Requirements**:
 - Git Bash (recommended) or WSL
-- jq (usually included with Git Bash)
-- bc (available in Git Bash)
+- Prerequisites: jq, bc
+
+**Easy Installation**:
+```
+# Double-click this file:
+install-claude-stats.bat
+
+# It will automatically:
+# - Detect Git Bash
+# - Check for jq and bc
+# - Install via Chocolatey if needed
+# - Run the bash installer
+```
 
 **Path handling**:
 - Scripts auto-detect `/c/Users/` style paths
@@ -389,5 +456,5 @@ When reporting issues, include:
 
 ---
 
-**Last Updated**: 2026-01-03 (v0.6.7)
+**Last Updated**: 2026-01-03 (v0.6.8)
 

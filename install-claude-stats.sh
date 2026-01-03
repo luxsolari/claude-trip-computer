@@ -12,7 +12,7 @@ if [ -f "$SCRIPT_DIR/VERSION" ]; then
 fi
 
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║   Claude Code Session Stats Tracking - Installer          ║"
+echo "║   Claude Code Session Stats Tracking - *NIX Installer      ║"
 echo "║   Version: $VERSION                                        ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
@@ -37,50 +37,168 @@ echo ""
 
 # Check prerequisites
 echo "Checking prerequisites..."
+echo ""
+
+MISSING_PREREQS=()
 
 # Check for jq
 if ! command -v jq &> /dev/null; then
-  echo "❌ jq is not installed"
-  echo ""
-  echo "Please install jq first:"
-  case "$OS" in
-    linux)
-      echo "  Ubuntu/Debian: sudo apt-get install -y jq"
-      echo "  RHEL/Fedora:   sudo dnf install -y jq"
-      echo "  Arch:          sudo pacman -S jq"
-      ;;
-    macos)
-      echo "  macOS:         brew install jq"
-      ;;
-    windows)
-      echo "  WSL:           sudo apt-get install -y jq"
-      echo "  Git Bash:      Download from https://stedolan.github.io/jq/"
-      ;;
-  esac
-  exit 1
+  echo "⚠ jq is not installed"
+  MISSING_PREREQS+=("jq")
+else
+  echo "✓ jq is installed ($(jq --version))"
 fi
-echo "✓ jq is installed ($(jq --version))"
 
 # Check for bc
 if ! command -v bc &> /dev/null; then
-  echo "❌ bc is not installed"
-  echo ""
-  echo "Please install bc first:"
-  case "$OS" in
-    linux)
-      echo "  Ubuntu/Debian: sudo apt-get install -y bc"
-      echo "  RHEL/Fedora:   sudo dnf install -y bc"
-      ;;
-    macos)
-      echo "  bc is pre-installed on macOS"
-      ;;
-    windows)
-      echo "  bc is usually included with Git Bash"
-      ;;
-  esac
-  exit 1
+  echo "⚠ bc is not installed"
+  MISSING_PREREQS+=("bc")
+else
+  echo "✓ bc is installed"
 fi
-echo "✓ bc is installed"
+
+# If prerequisites are missing, offer to install them
+if [ ${#MISSING_PREREQS[@]} -gt 0 ]; then
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "Missing prerequisites: ${MISSING_PREREQS[*]}"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "Would you like to install them automatically? (Y/n)"
+  echo ""
+  
+  read -p "Install prerequisites? [Y/n]: " INSTALL_CHOICE
+  INSTALL_CHOICE=${INSTALL_CHOICE:-Y}  # Default to Y if empty
+  
+  if [[ "$INSTALL_CHOICE" =~ ^[Yy]$ ]]; then
+    echo ""
+    echo "Installing prerequisites..."
+    echo ""
+    
+    case "$OS" in
+      linux)
+        # Detect package manager
+        if command -v apt-get &> /dev/null; then
+          echo "Using apt-get package manager..."
+          for pkg in "${MISSING_PREREQS[@]}"; do
+            echo "Installing $pkg..."
+            sudo apt-get update -qq && sudo apt-get install -y "$pkg"
+            if [ $? -ne 0 ]; then
+              echo "❌ Failed to install $pkg"
+              echo "Please install manually: sudo apt-get install -y $pkg"
+              exit 1
+            fi
+          done
+        elif command -v dnf &> /dev/null; then
+          echo "Using dnf package manager..."
+          for pkg in "${MISSING_PREREQS[@]}"; do
+            echo "Installing $pkg..."
+            sudo dnf install -y "$pkg"
+            if [ $? -ne 0 ]; then
+              echo "❌ Failed to install $pkg"
+              echo "Please install manually: sudo dnf install -y $pkg"
+              exit 1
+            fi
+          done
+        elif command -v pacman &> /dev/null; then
+          echo "Using pacman package manager..."
+          for pkg in "${MISSING_PREREQS[@]}"; do
+            echo "Installing $pkg..."
+            sudo pacman -S --noconfirm "$pkg"
+            if [ $? -ne 0 ]; then
+              echo "❌ Failed to install $pkg"
+              echo "Please install manually: sudo pacman -S $pkg"
+              exit 1
+            fi
+          done
+        else
+          echo "❌ Could not detect package manager"
+          echo "Please install manually: ${MISSING_PREREQS[*]}"
+          exit 1
+        fi
+        ;;
+        
+      macos)
+        # Check for Homebrew
+        if command -v brew &> /dev/null; then
+          echo "Using Homebrew package manager..."
+          for pkg in "${MISSING_PREREQS[@]}"; do
+            # bc is pre-installed on macOS
+            if [ "$pkg" == "bc" ]; then
+              echo "⚠ bc should be pre-installed on macOS"
+              echo "If missing, please reinstall Xcode Command Line Tools"
+              continue
+            fi
+            echo "Installing $pkg..."
+            brew install "$pkg"
+            if [ $? -ne 0 ]; then
+              echo "❌ Failed to install $pkg"
+              echo "Please install manually: brew install $pkg"
+              exit 1
+            fi
+          done
+        else
+          echo "❌ Homebrew not found"
+          echo ""
+          echo "Please install Homebrew first:"
+          echo "  /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+          echo ""
+          echo "Then run this installer again."
+          exit 1
+        fi
+        ;;
+        
+      windows)
+        echo "❌ Cannot auto-install on Windows via bash"
+        echo ""
+        echo "Please use the Windows batch installer instead:"
+        echo "  install-claude-stats.bat"
+        echo ""
+        echo "Or install manually:"
+        echo "  - Install Chocolatey: https://chocolatey.org/install"
+        echo "  - Run: choco install jq"
+        echo "  - bc: Usually included with Git Bash"
+        echo "  - bc manual install: https://stackoverflow.com/a/57787863/32131291"
+        exit 1
+        ;;
+    esac
+    
+    echo ""
+    echo "✓ Prerequisites installed successfully"
+    echo ""
+    
+    # Verify installation
+    for pkg in "${MISSING_PREREQS[@]}"; do
+      if ! command -v "$pkg" &> /dev/null; then
+        echo "❌ $pkg installation failed or not in PATH"
+        echo "Please install manually and run installer again"
+        exit 1
+      fi
+      echo "✓ $pkg is now available"
+    done
+  else
+    echo ""
+    echo "Installation cancelled."
+    echo ""
+    echo "Please install prerequisites manually:"
+    case "$OS" in
+      linux)
+        echo "  Ubuntu/Debian: sudo apt-get install -y ${MISSING_PREREQS[*]}"
+        echo "  RHEL/Fedora:   sudo dnf install -y ${MISSING_PREREQS[*]}"
+        echo "  Arch:          sudo pacman -S ${MISSING_PREREQS[*]}"
+        ;;
+      macos)
+        echo "  macOS:         brew install ${MISSING_PREREQS[*]}"
+        ;;
+      windows)
+        echo "  Windows:       Use install-claude-stats.bat"
+        echo "  Or manually:   choco install jq"
+        echo "  bc manual:     https://stackoverflow.com/a/57787863/32131291"
+        ;;
+    esac
+    exit 1
+  fi
+fi
 
 echo ""
 echo "Configuring billing mode..."
