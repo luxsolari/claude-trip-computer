@@ -18,7 +18,7 @@ This project **strictly enforces** the following conventions for all contributio
 - **MINOR** version: Increment for new backward-compatible functionality
   - Example: `0.5.1` → `0.6.0` (added prompt analysis feature)
 - **PATCH** version: Increment for backward-compatible bug fixes
-  - Example: `0.5.0` → `0.5.1` (fixed locale warning)
+  - Example: `0.6.0` → `0.6.1` (fixed Windows spaces-in-username compatibility)
 
 **Files to Update:**
 1. `VERSION` - Single source of truth

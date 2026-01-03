@@ -139,7 +139,7 @@ echo "Installing scripts..."
 cat > ~/.claude/hooks/brief-stats.sh << 'SCRIPT_EOF'
 #!/bin/bash
 # Brief session statistics displayed in the status line
-# Claude Code Session Stats - Version 0.4.2
+# Claude Code Session Stats - Version 0.6.2
 
 # Force C locale for consistent number formatting
 export LC_NUMERIC=C
@@ -159,7 +159,23 @@ fi
 ACTIVE_SESSION_ID=$(echo "$INPUT" | jq -r '.sessionId // empty' 2>/dev/null)
 
 # Find the project directory
-PROJECT_DIR=$(pwd | sed 's/\//-/g' | sed 's/_/-/g')
+# Find the project directory - handle Windows drive letters specially
+# Get working directory from Claude Code JSON input, fallback to pwd
+if [ -n "$INPUT" ]; then
+  PWD_PATH=$(echo "$INPUT" | jq -r '.workspace.current_dir // .workspace.project_dir // .cwd // empty' 2>/dev/null)
+fi
+if [ -z "$PWD_PATH" ]; then
+  PWD_PATH=$(pwd)
+fi
+if [[ "$PWD_PATH" =~ ^/([a-z])/ ]]; then
+  # Windows Git Bash path like /c/Dev/project -> C--Dev-project
+  DRIVE_LETTER=$(echo "${BASH_REMATCH[1]}" | tr '[:lower:]' '[:upper:]')
+  REST_PATH=$(echo "$PWD_PATH" | sed 's|^/[a-z]/||' | sed 's/\//-/g' | sed 's/_/-/g')
+  PROJECT_DIR="${DRIVE_LETTER}--${REST_PATH}"
+else
+  # Unix path - replace / and _ with -
+  PROJECT_DIR=$(echo "$PWD_PATH" | sed 's/\//-/g' | sed 's/_/-/g')
+fi
 TRANSCRIPT_DIR="$HOME/.claude/projects/$PROJECT_DIR"
 
 # Check for active sub-agents with robust detection
@@ -382,7 +398,7 @@ cat > ~/.claude/hooks/show-session-stats.sh << 'SCRIPT_EOF'
 set -e
 
 # Helper script to display session statistics for current or specified session
-# Claude Code Session Stats - Version 0.6.0
+# Claude Code Session Stats - Version 0.6.2
 # Usage: ./show-session-stats.sh [session_id]
 
 # Force C locale for consistent number formatting (avoids locale warnings on systems without en_US.UTF-8)
@@ -393,7 +409,7 @@ if [ -n "$1" ]; then
   SESSION_ID="$1"
 else
   # Find the most recent transcript file for this project
-  PROJECT_DIR=$(pwd | sed 's/\//-/g' | sed 's/_/-/g')
+  PROJECT_DIR=$(pwd | sed 's|^/\([a-z]\)/|\U\1--|' | sed 's/\//-/g' | sed 's/_/-/g')
   TRANSCRIPT_DIR="$HOME/.claude/projects/$PROJECT_DIR"
 
   if [ -d "$TRANSCRIPT_DIR" ]; then
@@ -410,7 +426,7 @@ else
 fi
 
 # Construct transcript path
-PROJECT_DIR=$(pwd | sed 's/\//-/g' | sed 's/_/-/g')
+PROJECT_DIR=$(pwd | sed 's|^/\([a-z]\)/|\U\1--|' | sed 's/\//-/g' | sed 's/_/-/g')
 TRANSCRIPT_PATH="$HOME/.claude/projects/$PROJECT_DIR/${SESSION_ID}.jsonl"
 
 if [ ! -f "$TRANSCRIPT_PATH" ]; then
@@ -937,7 +953,7 @@ fi
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════════════════════════╗"
-echo "║  🚗 TRIP COMPUTER v0.6.0  │  \$$ESTIMATE_TOTAL_COST session  │  ${CACHE_EFFICIENCY}% efficient  ║"
+echo "║  🚗 TRIP COMPUTER v0.6.1  │  \$$ESTIMATE_TOTAL_COST session  │  ${CACHE_EFFICIENCY}% efficient  ║"
 echo "╚══════════════════════════════════════════════════════════════════════════════╝"
 echo ""
 echo "📊 QUICK SUMMARY"
@@ -1215,25 +1231,31 @@ echo "Configuring status line..."
 # Configure settings.json
 SETTINGS_FILE="$HOME/.claude/settings.json"
 
+# Get absolute path to script and check for spaces
+SCRIPT_PATH="$HOME/.claude/hooks/brief-stats.sh"
+
+# Check if path contains spaces - if so, wrap with bash command
+if [[ "$SCRIPT_PATH" == *" "* ]]; then
+  # Path has spaces - use bash wrapper (jq will handle JSON escaping)
+  STATUS_COMMAND="bash \"$SCRIPT_PATH\""
+  echo "✓ Detected spaces in path, using bash wrapper"
+else
+  # No spaces - use simple path
+  STATUS_COMMAND="~/.claude/hooks/brief-stats.sh"
+fi
+
 if [ -f "$SETTINGS_FILE" ]; then
   # Backup existing settings
   cp "$SETTINGS_FILE" "${SETTINGS_FILE}.backup"
   echo "✓ Backed up existing settings to settings.json.backup"
 
   # Update statusLine using jq
-  jq '.statusLine = {"type": "command", "command": "~/.claude/hooks/brief-stats.sh"}' \
+  jq --arg cmd "$STATUS_COMMAND" '.statusLine = {"type": "command", "command": $cmd}' \
     "$SETTINGS_FILE" > "${SETTINGS_FILE}.tmp" && mv "${SETTINGS_FILE}.tmp" "$SETTINGS_FILE"
   echo "✓ Updated ~/.claude/settings.json"
 else
   # Create new settings file
-  cat > "$SETTINGS_FILE" << 'SETTINGS_EOF'
-{
-  "statusLine": {
-    "type": "command",
-    "command": "~/.claude/hooks/brief-stats.sh"
-  }
-}
-SETTINGS_EOF
+  jq -n --arg cmd "$STATUS_COMMAND" '{statusLine: {type: "command", command: $cmd}}' > "$SETTINGS_FILE"
   echo "✓ Created ~/.claude/settings.json"
 fi
 

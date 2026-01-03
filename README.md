@@ -1,6 +1,6 @@
 # Claude Code Session Stats Tracking
 
-**Version 0.6.0** | [Changelog](CHANGELOG.md)
+**Version 0.6.3** | [Changelog](CHANGELOG.md)
 
 Real-time cost tracking and advanced analytics for your Claude Code sessions.
 
@@ -59,7 +59,7 @@ Or when agents are working:
 
 ## Features
 
-✅ **Prompt quality analysis** (NEW v0.6.0) - Detects 4 inefficient prompting patterns (vague questions, large pastes, repeated questions, missing constraints) with estimated savings
+✅ **Prompt quality analysis** (v0.6.0) - Detects 4 inefficient prompting patterns (vague questions, large pastes, repeated questions, missing constraints) with estimated savings
 ✅ **Session health scoring** (NEW v0.5.0) - 0-100 automated assessment with 5-star rating
 ✅ **Cost drivers breakdown** (NEW v0.5.0) - Visual analysis of what's driving costs (input/output/cache)
 ✅ **Model mix visibility** (NEW v0.5.0) - See which models used and switching suggestions

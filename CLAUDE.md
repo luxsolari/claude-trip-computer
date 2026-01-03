@@ -3,7 +3,7 @@
 ## Project Overview
 
 **Name:** Claude Code Session Stats Tracking
-**Version:** 0.6.0 (see [CHANGELOG.md](CHANGELOG.md) for version history)
+**Version:** 0.6.3 (see [CHANGELOG.md](CHANGELOG.md) for version history)
 **Purpose:** Real-time cost tracking and analytics system for Claude Code sessions
 **Type:** CLI utility / Developer tool
 **Status:** Development phase (0.x.x versions) - Advanced analytics dashboard with health scoring, prompt analysis, and optimization recommendations
@@ -81,7 +81,7 @@ claude-session-stats/
 **Location:** `~/.claude/hooks/show-session-stats.sh`
 **Purpose:** Advanced analytics dashboard with health scoring, prompt quality analysis, and optimization recommendations
 **Triggered by:** `/trip-computer` slash command
-**Version:** 0.6.0 - Added prompt pattern analysis; detects vague questions, large pastes, repeated questions, missing constraints
+**Version:** 0.6.1 - Windows compatibility fix for usernames with spaces
 
 **Core Functionality:**
 - Analyzes session transcript to calculate best-effort cost estimates
@@ -598,6 +598,20 @@ See: README.md for details"
 4. Check execute permissions
 5. Check for errors: `bash -x ~/.claude/hooks/brief-stats.sh`
 
+**Windows-specific: Username with spaces**
+If your Windows username contains spaces (e.g., "Lux Solari"), older versions (< 0.6.1) may fail because the path splits incorrectly. Solutions:
+- **Recommended:** Reinstall using `install-claude-stats.sh` (v0.6.1+ auto-detects spaces)
+- **Manual fix:** Edit `~/.claude/settings.json` to wrap command with bash:
+  ```json
+  {
+    "statusLine": {
+      "type": "command",
+      "command": "bash \"/c/Users/Your Name/.claude/hooks/brief-stats.sh\""
+    }
+  }
+  ```
+- **Verify:** Run `bash "/c/Users/Your Name/.claude/hooks/brief-stats.sh"` to test
+
 ### Transcript files not found
 - Check `~/.claude/projects/` directory exists
 - Verify project directory name mapping
@@ -615,6 +629,20 @@ See: README.md for details"
 **Status:** Clean working directory
 **Recent commit:** Initial commit with all setup files
 
+## External Documentation References
+
+### Claude Code Official Documentation
+- **Status Line Configuration**: https://code.claude.com/docs/en/statusline
+  - How the status line works, JSON input structure, update frequency
+  - Example implementations in bash, Python, Node.js
+  - Context window usage tracking
+  - Last fetched: 2026-01-03
+
+### Related Resources
+- **Anthropic Pricing**: https://platform.claude.com/docs/en/about-claude/pricing
+  - Model pricing rates (verified 2025-12-15)
+  - Cache multipliers and long context pricing
+
 ## Contact & Support
 
 For questions or issues with this tracking system, refer to:
@@ -624,7 +652,7 @@ For questions or issues with this tracking system, refer to:
 
 ---
 
-**Last Updated:** 2026-01-03 (v0.6.0 - Added prompt quality analysis)
+**Last Updated:** 2026-01-03 (v0.6.3 - Fixed status line to read working directory from Claude Code JSON input)
 **Claude Code Version Compatibility:** v1.0+
 **Status:** Stable, production-ready
 - all changes proposed in this project should be applied both on the status line and the custom command, along with updating installer script and relevant documentation / guides.

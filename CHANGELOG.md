@@ -7,6 +7,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-01-03
+
+### Fixed - Status Line Working Directory
+- **Status line showing zeroes**: Fixed brief-stats.sh to read working directory from Claude Code JSON input instead of using `pwd`
+  - **Root cause**: When Claude Code invokes the status line script, `pwd` returns the hooks directory, not the project directory
+  - **Impact**: Script couldn't find transcript files, always showing 0 msgs, 0 tools, 0 tokens in status line
+  - **Fix**: Script now reads `workspace.current_dir` from JSON input provided by Claude Code, with fallback to `pwd`
+- **Files updated**:
+  - `brief-stats.sh`: Lines 22-28 - Added JSON parsing to extract working directory from Claude Code input
+  - `install-claude-stats.sh`: Line 163 - Same fix applied to installer's embedded script
+
+### Technical
+- Claude Code passes JSON via stdin including `workspace.current_dir` and `workspace.project_dir`
+- Updated logic:
+  1. Try to read directory from JSON: `workspace.current_dir // workspace.project_dir // cwd`
+  2. Fallback to `pwd` if JSON not available or parsing fails
+  3. Apply Windows drive letter transformation to the detected directory
+- This allows the script to work correctly regardless of where Claude Code executes it from
+
+## [0.6.2] - 2026-01-03
+
+### Fixed - Windows Path Mapping
+- **Project directory mapping on Windows Git Bash**: Fixed incorrect directory name calculation that caused metrics to always show zero
+  - **Root cause**: Script converted `/c/Dev/project` to `-c-Dev-project` but Claude Code creates directories as `C--Dev-project`
+  - **Impact**: Status line and `/trip-computer` could not find transcript files, always showing 0 msgs, 0 tools, 0 tokens
+  - **Fix**: Added Windows drive letter detection and proper transformation (`/c/` → `C--`)
+- **Files updated**:
+  - `brief-stats.sh`: Added regex pattern matching `[[ "$PWD_PATH" =~ ^/([a-z])/ ]]` with BASH_REMATCH for drive letter uppercasing
+  - `show-session-stats.sh`: Uses sed transformation `sed 's|^/\([a-z]\)/|\U\1--|'` to uppercase drive letter and add double dash
+  - `install-claude-stats.sh`: Both approaches embedded in installer to generate correct scripts
+- **Cross-platform compatibility**: Works correctly on Linux, macOS (Unix paths), and Windows Git Bash (drive letter paths)
+
+### Technical
+Two equivalent approaches used across scripts:
+
+**Approach 1 (brief-stats.sh, installer):**
+- Detection: `[[ "$PWD_PATH" =~ ^/([a-z])/ ]]` matches Windows paths like `/c/Dev/project`
+- Transformation: Extract drive letter via `${BASH_REMATCH[1]}`, uppercase with `tr`, combine with `--` prefix
+- Result: `C--Dev-claude-trip-computer`
+
+**Approach 2 (show-session-stats.sh):**
+- Single sed pipeline: `sed 's|^/\([a-z]\)/|\U\1--|'` captures drive letter and uppercases it inline
+- Simpler but requires GNU sed `\U` (uppercase) flag support
+- Result: `C--Dev-claude-trip-computer` (identical output)
+
+Both fallback to Unix transformation (`s/\//-/g`) for non-Windows paths.
+
+
+## [0.6.1] - 2026-01-03
+
+### Fixed - Windows Compatibility
+- **Spaces in username handling**: Fixed installer to detect and handle Windows usernames containing spaces (e.g., "Lux Solari")
+  - Installer now checks if `$HOME/.claude/hooks/brief-stats.sh` path contains spaces
+  - Automatically wraps command with `bash "path"` when spaces detected
+  - Uses simple `~/.claude/hooks/brief-stats.sh` path when no spaces present
+  - Prevents "command not found" errors on Windows systems with space-containing usernames
+- **Root cause**: Tilde expansion (`~`) to paths with spaces caused shell to split arguments incorrectly
+  - Example: `/c/Users/Lux Solari/.claude/` split into `/c/Users/Lux` and `Solari/.claude/`
+  - Fixed by using explicit bash invocation with properly quoted paths
+- **Impact**: Status line now works correctly for all Windows users regardless of username format
+
+### Changed
+- **Installer logic**: Enhanced settings.json generation to handle edge cases
+  - Detects path spaces before writing configuration
+  - Uses `jq --arg` for safe command string handling
+  - Provides user feedback when spaces detected ("✓ Detected spaces in path, using bash wrapper")
+
+### Technical
+- Modified `install-claude-stats.sh` lines 1218-1244 to add space detection and conditional bash wrapper
+- Changed from hardcoded `~/.claude/hooks/brief-stats.sh` to dynamic `SCRIPT_PATH` variable with conditional formatting
+- Updated jq invocation to use `--arg cmd` parameter for safe string interpolation
+- Cross-platform compatible: Works on Linux, macOS, and Windows (WSL/Git Bash)
+
 ## [0.6.0] - 2026-01-03
 
 ### Added - Prompt Quality Analysis
