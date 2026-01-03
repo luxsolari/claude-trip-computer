@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.4] - 2026-01-03
+
+### Fixed - Windows Git Bash HOME Path Issue
+- **Status line showing zeros on Windows with spaces in username**: Fixed HOME environment variable mismatch on Windows Git Bash
+  - **Root cause**: When Claude Code runs bash scripts on Windows, it sets `HOME=/home/Username` (Unix-style), but transcript files are actually stored at `/c/Users/username/` (Git Bash Windows path)
+  - **Impact**: Script couldn't find transcript directory, always showing 0 msgs, 0 tools, 0 tokens in status line on Windows systems
+  - **Fix**: Added automatic HOME path correction logic that detects `/home/*` paths and remaps them to `/c/Users/*/` equivalents (case-insensitive username matching)
+- **Files updated**:
+  - `install-claude-stats.sh`: Lines 146-160 - Added HOME path normalization for Windows Git Bash environments
+  - Version bumped to 0.6.4 in all scripts
+
+### Technical Details
+- HOME path correction runs before any transcript directory access
+- Case-insensitive username matching handles "Lux Solari" vs "luxsolari" variations
+- Preserves existing behavior on Linux/macOS (no changes for Unix HOME paths)
+- Solution tested on Windows 11 with Git Bash and usernames containing spaces
+
+### Notes
+- **sessionId via stdin**: Confirmed that Claude Code does NOT consistently pass sessionId or JSON input via stdin to status line scripts
+- Scripts rely on fallback logic: finding most recent transcript file in the project directory
+- This works reliably and doesn't require sessionId from Claude Code
+
 ## [0.6.3] - 2026-01-03
 
 ### Fixed - Status Line Working Directory

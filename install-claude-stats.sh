@@ -139,10 +139,24 @@ echo "Installing scripts..."
 cat > ~/.claude/hooks/brief-stats.sh << 'SCRIPT_EOF'
 #!/bin/bash
 # Brief session statistics displayed in the status line
-# Claude Code Session Stats - Version 0.6.2
+# Claude Code Session Stats - Version 0.6.4
 
 # Force C locale for consistent number formatting
 export LC_NUMERIC=C
+
+# FIX: On Windows Git Bash, HOME might be /home/USERNAME but Claude stores files in /c/Users/username
+# Normalize HOME to use Git Bash style path
+if [[ "$HOME" == /home/* ]] && [[ -d "/c/Users" ]]; then
+  # Extract username from /home/Username
+  USERNAME=$(basename "$HOME")
+  # Try to find matching user directory in /c/Users/ (case-insensitive)
+  for user_dir in "/c/Users"/*; do
+    if [[ "$(basename "$user_dir" | tr '[:upper:]' '[:lower:]')" == "$(echo "$USERNAME" | tr '[:upper:]' '[:lower:]')" ]]; then
+      HOME="$user_dir"
+      break
+    fi
+  done
+fi
 
 # Try to read session info from stdin (provided by Claude Code in statusLine context)
 # Read with a 1 second timeout - if nothing arrives, assume no session
@@ -398,7 +412,7 @@ cat > ~/.claude/hooks/show-session-stats.sh << 'SCRIPT_EOF'
 set -e
 
 # Helper script to display session statistics for current or specified session
-# Claude Code Session Stats - Version 0.6.2
+# Claude Code Session Stats - Version 0.6.4
 # Usage: ./show-session-stats.sh [session_id]
 
 # Force C locale for consistent number formatting (avoids locale warnings on systems without en_US.UTF-8)
@@ -953,7 +967,7 @@ fi
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════════════════════════╗"
-echo "║  🚗 TRIP COMPUTER v0.6.1  │  \$$ESTIMATE_TOTAL_COST session  │  ${CACHE_EFFICIENCY}% efficient  ║"
+echo "║  🚗 TRIP COMPUTER v0.6.3  │  \$$ESTIMATE_TOTAL_COST session  │  ${CACHE_EFFICIENCY}% efficient  ║"
 echo "╚══════════════════════════════════════════════════════════════════════════════╝"
 echo ""
 echo "📊 QUICK SUMMARY"
@@ -1241,7 +1255,7 @@ if [[ "$SCRIPT_PATH" == *" "* ]]; then
   echo "✓ Detected spaces in path, using bash wrapper"
 else
   # No spaces - use simple path
-  STATUS_COMMAND="~/.claude/hooks/brief-stats.sh"
+  STATUS_COMMAND="$HOME/.claude/hooks/brief-stats.sh"
 fi
 
 if [ -f "$SETTINGS_FILE" ]; then
@@ -1252,7 +1266,7 @@ if [ -f "$SETTINGS_FILE" ]; then
   # Update statusLine using jq
   jq --arg cmd "$STATUS_COMMAND" '.statusLine = {"type": "command", "command": $cmd}' \
     "$SETTINGS_FILE" > "${SETTINGS_FILE}.tmp" && mv "${SETTINGS_FILE}.tmp" "$SETTINGS_FILE"
-  echo "✓ Updated ~/.claude/settings.json"
+  echo "✓ Updated $HOME/.claude/settings.json"
 else
   # Create new settings file
   jq -n --arg cmd "$STATUS_COMMAND" '{statusLine: {type: "command", command: $cmd}}' > "$SETTINGS_FILE"
@@ -1270,9 +1284,8 @@ else
   echo "⚠️  Status line script error (may be normal if no sessions exist yet)"
 fi
 
-# Test show-session-stats.sh
-DETAIL_OUTPUT=$(~/.claude/hooks/show-session-stats.sh 2>&1 | head -3)
-if [ $? -eq 0 ]; then
+# Test show-session-stats.sh (output not displayed, just checking exit code)
+if ~/.claude/hooks/show-session-stats.sh >/dev/null 2>&1; then
   echo "✓ Detailed stats script works"
 else
   echo "⚠️  Detailed stats script error (may be normal if no sessions exist yet)"
