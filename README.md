@@ -1,6 +1,6 @@
 # Claude Code Session Stats Tracking
 
-**Version 0.6.3** | [Changelog](CHANGELOG.md)
+**Version 0.6.7** | [Changelog](CHANGELOG.md)
 
 Real-time cost tracking and advanced analytics for your Claude Code sessions.
 
@@ -12,13 +12,10 @@ Real-time cost tracking and advanced analytics for your Claude Code sessions.
 ```
 **Time:** ~2 minutes | Auto-detects OS, installs everything, tests it
 
-### Manual Setup
-Choose your platform guide:
-- **Linux** → `CLAUDE_STATS_SETUP_LINUX.md`
-- **macOS** → `CLAUDE_STATS_SETUP_MACOS.md`
-- **Windows** → `CLAUDE_STATS_SETUP_WINDOWS.md`
-
-**Time:** ~10 minutes | Step-by-step instructions with full explanations
+### Need Help?
+- **Troubleshooting** → [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+- **Manual Installation** → See troubleshooting guide (advanced users only)
+- **Technical Docs** → [CLAUDE.md](CLAUDE.md)
 
 ## What You Get
 

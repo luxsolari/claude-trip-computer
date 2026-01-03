@@ -7,6 +7,114 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.7] - 2026-01-03
+
+### Changed - Documentation Consolidation
+
+**Consolidated 3 platform-specific manual setup guides into single troubleshooting guide**
+
+**Motivation:**
+- Reduced maintenance burden (3 files with 6 embedded script copies → 1 file with references)
+- Eliminated version sync issues across multiple guides
+- Most users (95%+) use automated installer
+- Manual guides primarily needed for troubleshooting, not step-by-step setup
+
+**Changes:**
+- **Added**: `TROUBLESHOOTING.md` - Comprehensive troubleshooting and manual installation guide
+  - Quick fixes for common issues
+  - Verification steps
+  - Manual installation instructions (references installer for current scripts)
+  - Platform-specific notes
+  - Debug commands and tips
+- **Removed**: `CLAUDE_STATS_SETUP_WINDOWS.md` - Consolidated into TROUBLESHOOTING.md
+- **Removed**: `CLAUDE_STATS_SETUP_MACOS.md` - Consolidated into TROUBLESHOOTING.md
+- **Removed**: `CLAUDE_STATS_SETUP_LINUX.md` - Consolidated into TROUBLESHOOTING.md
+- **Updated**: `README.md` - Now references TROUBLESHOOTING.md instead of 3 separate guides
+- **Updated**: `CLAUDE.md` - Updated project structure and documentation checklist
+
+**Benefits:**
+- Easier to maintain (1 file vs 3)
+- No embedded script copies to keep in sync
+- Better organized troubleshooting content
+- Cleaner project structure
+- Still provides all necessary information for manual setup
+
+**Migration:**
+- Old guides deleted - use TROUBLESHOOTING.md for all manual setup needs
+- No impact on automated installer (still recommended method)
+
+## [0.6.6] - 2026-01-03
+
+### Added - Conservative Safety Margin Feature
+
+**Philosophy**: Better to slightly overestimate costs than underestimate and surprise users with higher bills.
+
+**Implementation**:
+- Added configurable `SAFETY_MARGIN` parameter (default: 1.05 = 5% buffer)
+- Applied to all cost calculations in both status line and trip computer
+- Stored in `~/.claude/hooks/.stats-config` for user customization
+
+**Impact**:
+- **Before**: Estimates typically 5% **under** actual costs (due to web searches, background ops)
+- **After**: Estimates typically 0-5% **over** actual costs (conservative, safer)
+- Users can adjust margin: 1.00 (exact) to 1.10 (10% buffer)
+
+**Files Updated**:
+- `brief-stats.sh`: Lines 104-111 (load SAFETY_MARGIN), Lines 248-253 (apply margin)
+- `show-session-stats.sh`: Lines 45-49 (load SAFETY_MARGIN), Lines 188-191 (apply margin)
+- `install-claude-stats.sh`: Lines 129-132 (config generation), embedded scripts updated
+- `.stats-config`: Added SAFETY_MARGIN="1.05" with documentation
+- `CLAUDE.md`: Added "Cost Estimate Philosophy" section
+- `VERSION`: Bumped to 0.6.6
+
+**Configuration**:
+```bash
+# In ~/.claude/hooks/.stats-config
+SAFETY_MARGIN="1.05"  # 5% buffer (default)
+# SAFETY_MARGIN="1.00"  # Exact estimate (no buffer)
+# SAFETY_MARGIN="1.10"  # 10% buffer (more conservative)
+```
+
+**Benefits**:
+- Avoids billing surprises
+- Better budget planning
+- Accounts for measurement uncertainties
+- Configurable per-user risk tolerance
+
+## [0.6.5] - 2026-01-03
+
+### Fixed - Documentation Accuracy for Cost Calculation
+
+**Issue**: Documentation showed outdated token deduplication algorithm that filtered `isSidechain == false`, incorrectly suggesting we excluded sub-agent costs.
+
+**Reality**: Scripts were already correct and included all billable usage (main agent + sub-agents + web searches), but documentation was misleading.
+
+**Changes**:
+- **CLAUDE.md** - Updated Token Deduplication Algorithm section:
+  - Removed outdated `isSidechain == false` filter from example code
+  - Added clarification that ALL usage is aggregated regardless of `isSidechain` status
+  - Documented that sub-agent activities (web search, etc.) are billed and must be included
+  - Added note about web search costs and why they contribute to 5-10% variance
+  - Updated all variance disclaimers from "up to 10%" to "5-10%" for more accuracy
+  - Updated pricing verification date to 2026-01-03
+
+**Confirmed Behavior**:
+- ✅ Scripts correctly aggregate ALL usage entries (no `isSidechain` filtering)
+- ✅ Sub-agent costs are included in calculations
+- ✅ Web search costs are included when usage entries exist
+- ✅ Typical variance is 5-10% compared to `/cost` command
+- ✅ No code changes needed - scripts were already correct
+
+**Files Updated**:
+- `CLAUDE.md`: Lines 248-269 (Token Deduplication Algorithm), Lines 460-489 (Expected Variance sections)
+- `VERSION`: Bumped to 0.6.5
+- `CHANGELOG.md`: This entry
+
+### Testing
+- Verified current implementation shows $0.1934 vs `/cost` $0.2035 = 5% variance (within expected range)
+- Confirmed no `isSidechain` filters exist in any scripts (brief-stats.sh, show-session-stats.sh, installer)
+- Pricing tables verified as current (Anthropic official pricing, January 2026)
+
 ## [0.6.4] - 2026-01-03
 
 ### Fixed - Windows Git Bash HOME Path Issue

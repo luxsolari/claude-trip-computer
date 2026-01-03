@@ -3,7 +3,7 @@
 ## Project Overview
 
 **Name:** Claude Code Session Stats Tracking
-**Version:** 0.6.3 (see [CHANGELOG.md](CHANGELOG.md) for version history)
+**Version:** 0.6.7 (see [CHANGELOG.md](CHANGELOG.md) for version history)
 **Purpose:** Real-time cost tracking and analytics system for Claude Code sessions
 **Type:** CLI utility / Developer tool
 **Status:** Development phase (0.x.x versions) - Advanced analytics dashboard with health scoring, prompt analysis, and optimization recommendations
@@ -29,9 +29,7 @@ claude-session-stats/
 ├── CHANGELOG.md                      # Version history and changes
 ├── README.md                          # Main documentation
 ├── CLAUDE.md                          # Project context (this file)
-├── CLAUDE_STATS_SETUP_MACOS.md       # macOS manual setup guide
-├── CLAUDE_STATS_SETUP_LINUX.md       # Linux manual setup guide
-├── CLAUDE_STATS_SETUP_WINDOWS.md     # Windows manual setup guide
+├── TROUBLESHOOTING.md                # Troubleshooting & manual setup guide
 └── .git/                             # Git repository
 ```
 
@@ -85,7 +83,7 @@ claude-session-stats/
 
 **Core Functionality:**
 - Analyzes session transcript to calculate best-effort cost estimates
-- Typically within 10% of actual costs (validated against `/cost` command)
+- Typically within 5-10% of actual costs (validated against `/cost` command)
 - Provides actionable insights and recommendations prioritized by potential savings
 - Adapts messaging based on billing mode (API vs Subscription)
 - Automated session health assessment (0-100 score)
@@ -248,24 +246,38 @@ Example:
 ### Token Deduplication Algorithm
 
 **Problem:** Session transcripts contain multiple entries per API call, causing 3-4x inflation
-**Solution:** Group by `requestId`, take MAX value for each token type per request, then sum
+**Solution:** Group by `requestId` + `model`, take MAX value for each token type per request, then aggregate by model
+
+**Key Insight:** We include ALL usage entries regardless of `isSidechain` status because:
+- Sub-agent activities (web search, etc.) are billed
+- Web searches typically cost $10 per 1,000 searches plus tokens
+- All billable events must be aggregated for accurate cost tracking
 
 ```bash
-# Deduplication JQ query
-jq -s '[.[] | select(.isSidechain == false)] |
-  group_by(.requestId) |
-  map(select(.[0].message.usage) | {
-    input: (map(.message.usage.input_tokens // 0) | max),
-    output: (map(.message.usage.output_tokens // 0) | max),
-    cache_creation: (map(.message.usage.cache_creation_input_tokens // 0) | max),
-    cache_read: (map(.message.usage.cache_read_input_tokens // 0) | max)
-  }) | {
-    input: (map(.input) | add // 0),
-    output: (map(.output) | add // 0),
-    cache_creation: (map(.cache_creation) | add // 0),
-    cache_read: (map(.cache_read) | add // 0)
-  }'
+# Deduplication JQ query (per-model aggregation)
+jq -s '
+[.[] | select(.message.usage and .message.model)] |
+group_by(.requestId + "|" + .message.model) |
+map({
+  requestId: .[0].requestId,
+  model: .[0].message.model,
+  input: (map(.message.usage.input_tokens // 0) | max),
+  output: (map(.message.usage.output_tokens // 0) | max),
+  cache_creation: (map(.message.usage.cache_creation_input_tokens // 0) | max),
+  cache_read: (map(.message.usage.cache_read_input_tokens // 0) | max)
+}) |
+group_by(.model) |
+map({
+  model: .[0].model,
+  input: (map(.input) | add),
+  output: (map(.output) | add),
+  cache_creation: (map(.cache_creation) | add),
+  cache_read: (map(.cache_read) | add)
+})
+'
 ```
+
+**Note:** Web search costs appear in `/cost` output but may not have explicit `usage` entries in transcripts. This contributes to the typical 5-10% variance between our estimates and `/cost`.
 
 ### Billing Mode Configuration
 
@@ -319,7 +331,7 @@ When a request's input tokens (input + cache_creation + cache_read) exceed 200,0
 4. Uses model-specific multipliers for cache cost calculations
 5. Detects long context threshold (>200K input) for Sonnet 4/4.5
 
-**Pricing Source:** [Anthropic Official Pricing](https://platform.claude.com/docs/en/about-claude/pricing) (verified 2025-12-15)
+**Pricing Source:** [Anthropic Official Pricing](https://platform.claude.com/docs/en/about-claude/pricing) (verified 2026-01-03)
 
 ### Agent Detection
 
@@ -379,10 +391,7 @@ When a request's input tokens (input + cache_creation + cache_read) exceed 200,0
 Time: ~2 minutes
 
 **Manual:**
-Follow platform-specific guide:
-- macOS: `CLAUDE_STATS_SETUP_MACOS.md`
-- Linux: `CLAUDE_STATS_SETUP_LINUX.md`
-- Windows: `CLAUDE_STATS_SETUP_WINDOWS.md`
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Manual Installation section
 
 Time: ~10 minutes
 
@@ -457,24 +466,43 @@ select(.type == "user" and
 
 ## Important Disclaimers
 
-### Expected Variance: Up to 10%
+### Cost Estimate Philosophy
 
-Session stats are **estimates** derived from local transcript files and are typically **accurate within 10%** of the `/cost` command. Minor differences occur due to:
+**Conservative by Design**: This tool applies a **5% safety margin** to all cost estimates to avoid underestimation.
 
-1. **Background Operations** - Claude Code uses ~$0.04/session for summarization and internal operations not always logged in transcripts
-2. **Timing Differences** - Transcripts write asynchronously; `/cost` queries API in real-time
-3. **Measurement Methods** - Anthropic's API uses official token counters; our scripts estimate from transcript logs
-4. **Deduplication Approach** - While we avoid 3-4x inflation by deduplicating by `requestId`, edge cases remain
+**Why?**
+- Better to slightly overestimate than be surprised by higher costs
+- Helps with budget planning and decision-making
+- Accounts for edge cases and measurement uncertainties
+- Configurable via `SAFETY_MARGIN` in `~/.claude/hooks/.stats-config`
+
+**What this means:**
+- Estimates typically run 0-10% **above** actual `/cost` values
+- Without safety margin: ~5% under actual (due to web searches, background ops)
+- With 5% safety margin (default): ~0-5% over actual
+- Users can adjust from 1.00 (exact) to 1.10 (10% buffer) based on risk tolerance
+
+**Philosophy**: For a budgeting tool, **conservative estimates** (slight overestimation) are safer than aggressive optimism that leads to billing surprises.
+
+### Expected Variance: 5-10%
+
+Session stats are **estimates** derived from local transcript files and are typically **accurate within 5-10%** of the `/cost` command. Minor differences occur due to:
+
+1. **Web Search Costs** - Web searches cost $10 per 1,000 searches plus token processing costs. These may not always appear as explicit `usage` entries in transcripts
+2. **Background Operations** - Claude Code performs summarization and internal operations (~$0.02-$0.04/session) not always logged in transcripts
+3. **Timing Differences** - Transcripts write asynchronously; `/cost` queries API in real-time
+4. **Measurement Methods** - Anthropic's API uses official token counters; our scripts estimate from transcript logs
+5. **Deduplication Edge Cases** - While we avoid 3-4x inflation by deduplicating by `requestId` + `model`, edge cases remain
 
 ### For Subscription Users
 - Costs shown are **API-equivalent estimates** for reference
 - **Actual usage is included in your subscription** with no additional charges
 - Useful for understanding value and managing rate limits
-- Typically accurate within 10% of actual usage shown in `/cost`
+- Typically accurate within 5-10% of actual usage shown in `/cost`
 
 ### For API Users
 - Costs shown are **session-level estimates** from transcript data
-- **Typically accurate within 10%** of official billing measurements
+- **Typically accurate within 5-10%** of official billing measurements
 - **Use `/cost` command for official billing amounts** and financial accounting
 - Session stats are for real-time awareness and optimization decisions
 
@@ -495,9 +523,7 @@ Session stats are **estimates** derived from local transcript files and are typi
 5. ✅ **~/.claude/hooks/show-session-stats.sh** - Detailed stats script (if already installed, update version)
 6. ✅ **CLAUDE.md** - Project context and technical documentation (update version reference)
 7. ✅ **README.md** - Quick start guide and overview (update version badge)
-8. ✅ **CLAUDE_STATS_SETUP_MACOS.md** - macOS manual installation guide
-9. ✅ **CLAUDE_STATS_SETUP_LINUX.md** - Linux manual installation guide
-10. ✅ **CLAUDE_STATS_SETUP_WINDOWS.md** - Windows manual installation guide
+8. ✅ **TROUBLESHOOTING.md** - Troubleshooting guide (update version if referenced)
 
 **Common Changes That Require Updates:**
 - Pricing rates or cache multipliers
@@ -563,15 +589,17 @@ FILE_MTIME=$(stat -f %m "$agent_file" 2>/dev/null || stat -c %Y "$agent_file" 2>
 ### Minimum Package
 - `install-claude-stats.sh`
 - `README.md`
+- `TROUBLESHOOTING.md`
 
 ### Complete Package
-- All 5 files (installer + README + 3 platform guides)
+- All core files (installer + README + TROUBLESHOOTING + CLAUDE.md + CHANGELOG)
 
 ### Sharing Instructions
 ```
 "Hey team! Real-time Claude Code cost tracking - 2 min setup.
 Run: ./install-claude-stats.sh
-See: README.md for details"
+Troubleshooting: TROUBLESHOOTING.md
+Docs: README.md"
 ```
 
 ## Future Enhancement Ideas
@@ -631,17 +659,158 @@ If your Windows username contains spaces (e.g., "Lux Solari"), older versions (<
 
 ## External Documentation References
 
+This section provides links to official Anthropic documentation relevant to this project. All URLs were verified as of 2026-01-03.
+
 ### Claude Code Official Documentation
+
+#### Core Features
 - **Status Line Configuration**: https://code.claude.com/docs/en/statusline
   - How the status line works, JSON input structure, update frequency
   - Example implementations in bash, Python, Node.js
   - Context window usage tracking
-  - Last fetched: 2026-01-03
+  - Essential for understanding how `brief-stats.sh` integrates with Claude Code
+  - Last verified: 2026-01-03
 
-### Related Resources
-- **Anthropic Pricing**: https://platform.claude.com/docs/en/about-claude/pricing
-  - Model pricing rates (verified 2025-12-15)
-  - Cache multipliers and long context pricing
+- **Hooks Guide**: https://code.claude.com/docs/en/hooks-guide
+  - Comprehensive guide to Claude Code hooks system
+  - Hook types, execution context, and lifecycle
+  - Best practices for creating custom hooks
+  - Error handling and debugging hooks
+  - Relevant for both `brief-stats.sh` and `show-session-stats.sh` implementation
+  - Last verified: 2026-01-03
+
+- **Sub-agents**: https://code.claude.com/docs/en/sub-agents
+  - How sub-agents work in Claude Code
+  - When Claude spawns sub-agents (web search, complex tasks)
+  - Sub-agent lifecycle and session tracking
+  - Understanding `isSidechain` property in transcripts
+  - Critical for accurate cost calculation (sub-agent usage is billed)
+  - Last verified: 2026-01-03
+
+- **Cost Tracking**: https://docs.anthropic.com/en/docs/claude-code/costs
+  - Official `/cost` command documentation
+  - How Anthropic tracks and bills Claude Code usage
+  - Average costs per developer ($6/day typical, <$12/day for 90% of users)
+  - Historical usage tracking via Anthropic Console
+  - Setting workspace spend limits
+  - Authoritative source for validating our cost estimates
+  - Last verified: 2026-01-03
+
+#### Commands
+- **Slash Commands**: https://code.claude.com/docs/en/commands
+  - Creating custom slash commands (like `/trip-computer`)
+  - Command structure and markdown format
+  - Passing parameters to commands
+  - Integration with hooks and scripts
+  - Last verified: 2026-01-03
+
+### Anthropic Pricing Documentation
+
+- **Official API Pricing**: https://www.anthropic.com/pricing
+  - Consumer plans (Free, Pro, Max)
+  - Team and Enterprise plans
+  - API pricing by model
+  - Subscription vs API billing differences
+  - Last verified: 2026-01-03
+
+- **Claude.com Pricing Page**: https://claude.com/pricing#api
+  - Detailed API pricing tables with all token costs
+  - Prompt caching pricing (write/read rates)
+  - Service tiers (Priority, Standard, Batch)
+  - Tools pricing (web search, code execution)
+  - Long context window pricing (>200K tokens)
+  - Last verified: 2026-01-03
+
+- **Platform Pricing Documentation**: https://platform.claude.com/docs/en/about-claude/pricing
+  - Technical pricing details for API developers
+  - Token counting methodology
+  - Cache multipliers and TTL information
+  - Extended prompt caching options
+  - Batch processing (50% discount)
+  - Model-specific pricing tables
+  - Source of truth for our pricing implementation
+  - Last verified: 2026-01-03
+
+### Model Documentation
+
+- **Models Overview**: https://docs.anthropic.com/en/docs/about-claude/models/overview
+  - Complete model family comparison
+  - Capabilities and use cases per model
+  - Context window sizes
+  - Model version history
+  - Deprecation timelines
+  - Helps users understand when to use Opus vs Sonnet vs Haiku
+  - Last verified: 2026-01-03
+
+### API Documentation
+
+- **API Reference**: https://docs.anthropic.com/en/api/getting-started
+  - Complete API documentation
+  - Token usage response structure
+  - Understanding `usage` object in API responses
+  - Relevant for understanding transcript file structure
+  - Last verified: 2026-01-03
+
+- **Prompt Caching**: https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching
+  - How prompt caching works
+  - 5-minute TTL (standard) vs extended caching
+  - Cache write vs cache read costs
+  - Strategies to maximize cache efficiency
+  - Explains why we track `cache_creation_input_tokens` and `cache_read_input_tokens`
+  - Last verified: 2026-01-03
+
+### Console & Account Management
+
+- **Anthropic Console**: https://console.anthropic.com
+  - Account management dashboard
+  - Historical usage tracking
+  - Workspace spend limits
+  - Billing and payment settings
+  - API key management
+  - Last verified: 2026-01-03
+
+### Support Resources
+
+- **Support Center**: https://support.anthropic.com
+  - Official support articles
+  - Troubleshooting guides
+  - FAQs about billing, usage, and features
+  - Contact information for billing questions
+  - Last verified: 2026-01-03
+
+### Version History & Updates
+
+- **Anthropic News**: https://www.anthropic.com/news
+  - Product announcements
+  - Pricing changes
+  - New model releases
+  - Feature updates
+  - Important for staying current on pricing changes
+  - Last verified: 2026-01-03
+
+### Key Integration Points
+
+This project relies on the following documentation areas:
+
+1. **Status Line Hook** (`brief-stats.sh`):
+   - Status Line Configuration docs for JSON input format
+   - Hooks Guide for execution context and lifecycle
+   - Cost Tracking docs for validation against `/cost`
+
+2. **Trip Computer Command** (`show-session-stats.sh`):
+   - Slash Commands docs for command structure
+   - Hooks Guide for script execution
+   - Sub-agents docs for `isSidechain` handling
+
+3. **Pricing Calculations**:
+   - Platform Pricing Documentation for token costs
+   - Prompt Caching docs for multipliers
+   - Models Overview for model detection patterns
+
+4. **Cost Validation**:
+   - Cost Tracking docs for `/cost` command behavior
+   - API Reference for `usage` object structure
+   - Console docs for historical usage comparison
 
 ## Contact & Support
 
@@ -652,7 +821,7 @@ For questions or issues with this tracking system, refer to:
 
 ---
 
-**Last Updated:** 2026-01-03 (v0.6.3 - Fixed status line to read working directory from Claude Code JSON input)
+**Last Updated:** 2026-01-03 (v0.6.7 - Consolidated 3 manual setup guides into TROUBLESHOOTING.md)
 **Claude Code Version Compatibility:** v1.0+
 **Status:** Stable, production-ready
 - all changes proposed in this project should be applied both on the status line and the custom command, along with updating installer script and relevant documentation / guides.
