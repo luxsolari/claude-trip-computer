@@ -1,0 +1,49 @@
+graph LR
+    subgraph "Phase 1: Foundation"
+        storage["Session Storage"]
+        detect["Billing Detection"]
+        windows["Window Tracking"]
+    end
+
+    subgraph "Phase 2: Subscription"
+        quota["Quota Management"]
+        burn["Burn Rate"]
+        meta["Metadata"]
+    end
+
+    subgraph "Phase 3: Intelligence"
+        patterns["Pattern Detection"]
+        insights["Natural Insights"]
+        predict["Predictions"]
+    end
+
+    subgraph "Phase 4: Polish"
+        custom["Customization"]
+        export["Export"]
+        achieve["Achievements"]
+    end
+
+    storage --> quota
+    detect --> burn
+    windows --> predict
+
+    quota --> patterns
+    burn --> insights
+    meta --> insights
+
+    patterns --> custom
+    insights --> export
+    predict --> achieve
+
+    style storage fill:#e1f5ff
+    style detect fill:#e1f5ff
+    style windows fill:#e1f5ff
+    style quota fill:#f3e5f5
+    style burn fill:#f3e5f5
+    style meta fill:#f3e5f5
+    style patterns fill:#e8f5e9
+    style insights fill:#e8f5e9
+    style predict fill:#e8f5e9
+    style custom fill:#fff3e0
+    style export fill:#fff3e0
+    style achieve fill:#fff3e0

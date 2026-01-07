@@ -1,0 +1,41 @@
+graph TB
+    History["📚 Session History<br/>(23 sessions)"]
+
+    Extract["Extract Features<br/>- Tags<br/>- Times<br/>- Models used<br/>- Efficiency"]
+
+    Summarize["Summarize for Claude<br/>JSON with metrics"]
+
+    Call["Call Claude API<br/>with session data"]
+
+    Claude["Claude Analyzes<br/>→ Patterns<br/>→ Insights<br/>→ Recommendations"]
+
+    Parse["Parse Response<br/>into sections"]
+
+    Cache["Cache for 24h<br/>(avoid repeated calls)"]
+
+    Display["Display in<br/>/trip-computer"]
+
+    Examples["Show examples:<br/>- Best times<br/>- Model choices<br/>- Context size"]
+
+    Recommend["Personalized Recs<br/>based on YOUR patterns"]
+
+    History --> Extract
+    Extract --> Summarize
+    Summarize --> Call
+    Call --> Claude
+    Claude --> Parse
+    Parse --> Cache
+    Cache --> Display
+    Display --> Examples
+    Examples --> Recommend
+
+    style History fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style Extract fill:#c5e1a5,stroke:#558b2f,stroke-width:2px
+    style Summarize fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    style Call fill:#ffccbc,stroke:#bf360c,stroke-width:2px
+    style Claude fill:#d1c4e9,stroke:#512da8,stroke-width:2px
+    style Parse fill:#f8bbd0,stroke:#880e4f,stroke-width:2px
+    style Cache fill:#b2dfdb,stroke:#00695c,stroke-width:2px
+    style Display fill:#bbdefb,stroke:#1565c0,stroke-width:2px
+    style Examples fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px
+    style Recommend fill:#ffccbc,stroke:#bf360c,stroke-width:2px

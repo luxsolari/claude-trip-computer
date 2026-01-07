@@ -1,0 +1,44 @@
+graph TB
+    DashHeader["📊 QUICK SUMMARY<br/>Quota: 89K/220K (40%) | Time to limit: 1h 15m | Cycles: 3"]
+
+    subgraph Windows["📅 QUOTA WINDOWS"]
+        W5H["5-Hour: 89K/220K (40%)<br/>Burn: 2.1K/msg | Reset: 4h 37m"]
+        W7D["7-Day: 450K/1.5M (30%)<br/>Avg: 150K/day | Days left: 4"]
+    end
+
+    subgraph Models["🤖 MODEL MIX"]
+        MOpus["Opus: 30K (34%)"]
+        MSonnet["Sonnet: 40K (45%)"]
+        MHaiku["Haiku: 19K (21%)"]
+    end
+
+    subgraph Recs["🎯 SMART RECOMMENDATIONS"]
+        R1["1. Switch Haiku for tests"]
+        R2["2. Trim context by 30%"]
+        R3["3. /clear at 75% threshold"]
+    end
+
+    subgraph Patterns["📚 YOUR PATTERNS"]
+        Pat1["Best time: 9-12 AM (72% eff)"]
+        Pat2["Haiku saves 50% quota"]
+        Pat3["Research costs 3x more"]
+    end
+
+    subgraph Insights["📝 CLAUDE'S ANALYSIS"]
+        Ins1["You're off to strong start"]
+        Ins2["Context trimming improving"]
+        Ins3["At this pace: 60 msgs remaining"]
+    end
+
+    DashHeader --> Windows
+    Windows --> Models
+    Models --> Recs
+    Recs --> Patterns
+    Patterns --> Insights
+
+    style DashHeader fill:#b2dfdb,stroke:#00695c,stroke-width:2px
+    style Windows fill:#c5e1a5,stroke:#558b2f,stroke-width:2px
+    style Models fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    style Recs fill:#ffccbc,stroke:#bf360c,stroke-width:2px
+    style Patterns fill:#f8bbd0,stroke:#c2185b,stroke-width:2px
+    style Insights fill:#d1c4e9,stroke:#512da8,stroke-width:2px

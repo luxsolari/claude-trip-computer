@@ -1,0 +1,48 @@
+graph LR
+    subgraph Phase1["Phase 1"]
+        P1_Storage["Storage"]
+        P1_Detect["Detection"]
+        P1_Track["Tracking"]
+        P1_API["Query API"]
+    end
+
+    subgraph Phase2["Phase 2"]
+        P2_Burn["Burn Rate"]
+        P2_Recs["Recommendations"]
+        P2_Meta["Metadata"]
+        P2_Dash["Dashboard v1"]
+    end
+
+    subgraph Phase3["Phase 3"]
+        P3_Pattern["Patterns"]
+        P3_Insight["Insights"]
+        P3_Predict["Predictions"]
+        P3_Dash["Dashboard v2"]
+    end
+
+    subgraph Phase4["Phase 4"]
+        P4_Custom["Customization"]
+        P4_Export["Export"]
+        P4_Achieve["Achievements"]
+        P4_Dash["Dashboard v3"]
+    end
+
+    P1_Storage --> P2_Burn
+    P1_Detect --> P2_Recs
+    P1_Track --> P3_Pattern
+    P1_API --> P3_Insight
+
+    P2_Burn --> P3_Predict
+    P2_Recs --> P3_Insight
+    P2_Meta --> P3_Pattern
+    P2_Dash --> P3_Dash
+
+    P3_Pattern --> P4_Custom
+    P3_Insight --> P4_Export
+    P3_Predict --> P4_Achieve
+    P3_Dash --> P4_Dash
+
+    style Phase1 fill:#e1f5ff,stroke:#01579b
+    style Phase2 fill:#f3e5f5,stroke:#4a148c
+    style Phase3 fill:#e8f5e9,stroke:#1b5e20
+    style Phase4 fill:#fff3e0,stroke:#e65100

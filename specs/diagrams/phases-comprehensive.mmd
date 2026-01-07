@@ -1,0 +1,57 @@
+graph TB
+    subgraph Phase1["🔷 PHASE 1: Foundation<br/>Weeks 1-2<br/>━━━━━━━━━━"]
+        P1Title["<b>Build the Infrastructure</b>"]
+        P1Features["Features:<br/>✓ Persistent storage<br/>✓ Auto-detect billing<br/>✓ 5h + 7d tracking<br/>✓ /clear detection<br/>✓ Session query API"]
+        P1Output["Output:<br/>💾 sessions.jsonl<br/>📊 Status line v1<br/>📁 Session history"]
+        P1Value["Value:<br/>Sessions survive /clear<br/>History available<br/>Ready for Phase 2"]
+    end
+
+    subgraph Phase2["🟣 PHASE 2: Subscription Excellence<br/>Weeks 3-4<br/>━━━━━━━━━━"]
+        P2Title["<b>Empower Subscription Users</b>"]
+        P2Features["Features:<br/>✓ Quota burn rate<br/>✓ Smart recommendations<br/>✓ Session metadata<br/>✓ /clear breakdown<br/>✓ Enhanced dashboard"]
+        P2Output["Output:<br/>📈 Status line v2<br/>📱 Dashboard v1<br/>🎯 Smart recs<br/>💾 Metadata storage"]
+        P2Value["Value:<br/>Know when limits hit<br/>Prevent surprises<br/>Proactive management"]
+    end
+
+    subgraph Phase3["🟢 PHASE 3: Claude Analyzing Claude<br/>Weeks 5-7<br/>━━━━━━━━━━"]
+        P3Title["<b>Intelligent Analysis & Learning</b>"]
+        P3Features["Features:<br/>✓ Pattern detection<br/>✓ Natural insights<br/>✓ Predictive warnings<br/>✓ Comparative analysis<br/>✓ Learning trajectory"]
+        P3Output["Output:<br/>📈 Status line v3<br/>🧠 Claude insights<br/>📱 Dashboard v2<br/>📚 Pattern analysis"]
+        P3Value["Value:<br/>Discover patterns<br/>Personalized recs<br/>Visible learning path"]
+    end
+
+    subgraph Phase4["🟠 PHASE 4: Polish & Integration<br/>Weeks 8-9<br/>━━━━━━━━━━"]
+        P4Title["<b>Customize & Refine</b>"]
+        P4Features["Features:<br/>✓ Status customization<br/>✓ Multi-format export<br/>✓ Achievement system<br/>✓ Advanced analytics<br/>✓ Team sharing"]
+        P4Output["Output:<br/>📈 Status line v4<br/>🏆 Achievements<br/>📤 Exports<br/>📊 Analytics suite"]
+        P4Value["Value:<br/>User preferences<br/>Shareable insights<br/>Complete solution"]
+    end
+
+    Phase1 --> Phase2
+    Phase2 --> Phase3
+    Phase3 --> Phase4
+
+    style Phase1 fill:#e1f5ff,stroke:#01579b,stroke-width:3px,color:#000
+    style Phase2 fill:#f3e5f5,stroke:#4a148c,stroke-width:3px,color:#000
+    style Phase3 fill:#e8f5e9,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Phase4 fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#000
+
+    style P1Title fill:#b3e5fc,stroke:#01579b
+    style P1Features fill:#e1f5ff,stroke:#01579b
+    style P1Output fill:#e1f5ff,stroke:#01579b
+    style P1Value fill:#b3e5fc,stroke:#01579b
+
+    style P2Title fill:#f1e0ff,stroke:#4a148c
+    style P2Features fill:#f3e5f5,stroke:#4a148c
+    style P2Output fill:#f3e5f5,stroke:#4a148c
+    style P2Value fill:#f1e0ff,stroke:#4a148c
+
+    style P3Title fill:#c8e6c9,stroke:#1b5e20
+    style P3Features fill:#e8f5e9,stroke:#1b5e20
+    style P3Output fill:#e8f5e9,stroke:#1b5e20
+    style P3Value fill:#c8e6c9,stroke:#1b5e20
+
+    style P4Title fill:#ffe0b2,stroke:#e65100
+    style P4Features fill:#fff3e0,stroke:#e65100
+    style P4Output fill:#fff3e0,stroke:#e65100
+    style P4Value fill:#ffe0b2,stroke:#e65100
