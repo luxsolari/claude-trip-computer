@@ -1,35 +1,59 @@
 # Claude Code Session Stats Tracking
 
-**Version 0.5.1** | [Changelog](CHANGELOG.md)
+**Version 0.9.1** | [Changelog](CHANGELOG.md)
 
-Real-time cost tracking and advanced analytics for your Claude Code sessions.
+Real-time session optimization with complete billing-mode differentiation: actionable efficiency insights for API users, value awareness for subscription users.
 
 ## Quick Install
 
-### Automated (Recommended)
+### Windows Users
+**Double-click installer:**
+```
+install-claude-stats.bat
+```
+- Automatically detects and installs prerequisites (jq, bc)
+- Requires Git for Windows
+
+**Or use bash:**
 ```bash
 ./install-claude-stats.sh
 ```
-**Time:** ~2 minutes | Auto-detects OS, installs everything, tests it
 
-### Manual Setup
-Choose your platform guide:
-- **Linux** → `CLAUDE_STATS_SETUP_LINUX.md`
-- **macOS** → `CLAUDE_STATS_SETUP_MACOS.md`
-- **Windows** → `CLAUDE_STATS_SETUP_WINDOWS.md`
+### Linux/macOS Users
+```bash
+./install-claude-stats.sh
+```
+- Automatically detects and installs prerequisites if missing
+- Supports apt-get, dnf, pacman (Linux) and Homebrew (macOS)
 
-**Time:** ~10 minutes | Step-by-step instructions with full explanations
+**Time:** ~2 minutes | Auto-detects OS, installs prerequisites, configures everything
+
+### Need Help?
+- **Troubleshooting** → [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+- **Manual Installation** → See troubleshooting guide (advanced users only)
+- **Technical Docs** → [CLAUDE.md](CLAUDE.md)
 
 ## What You Get
 
 ### Status Line
-**Real-time efficiency and cost tracking:**
+**Real-time session efficiency metrics:**
+
+**API Users:**
 ```
-💬 28 msgs | 🔧 185 tools | 🎯 13.5M tok | ⚡ 91% eff | 💳 ~$11.39 ($0.41/msg) | 📊 /trip-computer
+💬 28 msgs | 🔧 185 tools (6.6 tools/msg) | ⚡ 91% cached | 📝 1.8K tok/msg | 📈 /trip-computer
 ```
-- **⚡ 91% eff** - Cache efficiency showing how well prompt caching is working
-- **($0.41/msg)** - Cost per message for immediate spending awareness and trajectory tracking
-- **📊 /trip-computer** - Quick reminder to check detailed analytics
+
+**Subscription Users:**
+```
+💬 28 msgs | 🔧 185 tools (6.6 tools/msg) | ⚡ 91% cached | 📝 1.8K tok/msg | 📅 ~$11.39 value | 📈 /trip-computer
+```
+
+**What You See:**
+- **🔧 185 tools (6.6 tools/msg)** - Tool usage intensity showing task complexity (≥15: very intensive, ≥5: moderate, >0: light)
+- **⚡ 91% cached** - Cache efficiency showing how well prompt caching is working
+- **📝 1.8K tok/msg** - Response verbosity (avg output tokens per message)
+- **📅 ~$11.39 value** (Sub users only) - API-equivalent value with 10% safety margin
+- **📈 /trip-computer** - Access detailed optimization analytics
 
 Or when agents are working:
 ```
@@ -37,29 +61,61 @@ Or when agents are working:
 ```
 
 ### Trip Computer (`/trip-computer`)
-**Advanced analytics dashboard with health scoring and optimization:**
+**Session optimization dashboard with complete billing-mode differentiation (NEW v0.9.0):**
 
-**What You Get:**
-- 📈 **Session Health Score** (0-100) - Automated health assessment with 5-star rating
-- 🤖 **Model Mix Breakdown** - See which models you used and their cost contribution
-- 💵 **Cost Drivers Analysis** - Visual breakdown showing what's expensive (input/output/cache)
-- ⚡ **Efficiency Metrics** - Output/input ratio, cache hit rate, cost per token
-- 🎯 **Prioritized Recommendations** - Top 3 actions ranked by potential savings (e.g., "Save $0.60/10 msgs")
-- 📊 **Best-effort cost estimates** from session transcript (typically within 10% of actual)
-- 📈 **Trajectory Projections** - Next 10 messages, hourly rate estimates
-- ⚠️ **Context Growth Warnings** - When to use `/clear` for better performance
+**For API Users** - Optimization-First Experience:
+- 📈 **Session Health Score** (0-100) with 5-star rating
+- 🤖 **Model Mix Analysis** - See which models you used and when to switch
+- 📊 **Token Distribution** - Visual breakdown showing input/output/cache patterns (percentages only)
+- ⚡ **Efficiency Metrics** - Tool usage intensity, response verbosity, cache hit rate
+- 🎯 **Top 3 Optimization Actions** - Ranked by efficiency gains (no dollar amounts)
+- 📊 **Session Insights** - Context growth rate, tool patterns, cache performance trends
+- **NO COST DISPLAY** - Use `/cost` for official billing (accurate, authoritative)
+- **Purpose**: Actionable session optimization without cost distraction
 
-**For API Users:**
-- Reminds you to run `/cost` separately for official billing comparison
-- Estimates help with real-time decision making between interactions
+**For Subscription Users** - Value + Optimization:
+- 📈 **Session Health Score** (0-100) with 5-star rating
+- 🤖 **Model Mix Analysis** - See which models you used and when to switch
+- 💵 **Cost Drivers Breakdown** - Visual breakdown with dollar amounts (10% safety margin)
+- ⚡ **Efficiency Metrics** - Tool usage intensity, response verbosity, cache hit rate
+- 🎯 **Top 3 Optimization Actions** - Ranked by dollar savings potential
+- 📈 **Cost Trajectory** - Projected costs for next 10 messages, hourly rate
+- **API-Equivalent Estimates** - Understand subscription value with conservative buffer
+- **Purpose**: Value awareness + session optimization guidance
 
-**For Subscription Users:**
-- Shows API-equivalent estimates to understand rate limit impact
-- No actual charges (usage included in subscription)
+### Session End Statistics (NEW v0.7.0)
+**Automatic final analytics when sessions end:**
+
+When you exit Claude Code, use `/clear`, or log out, you'll automatically see:
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          SESSION ENDED - FINAL STATS                         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Session ID: abc123
+Exit Reason: exit
+
+[Complete Trip Computer Analytics Display]
+```
+
+**Benefits:**
+- **Zero effort** - Statistics appear automatically, no command needed
+- **Perfect timing** - Review costs right when you finish working
+- **Complete picture** - Full trip computer analytics, not just brief stats
+- **Session awareness** - Understand what each work session cost
+- **Learning tool** - See which workflows are most/least expensive over time
+
+**Triggers on:**
+- Claude Code exit
+- `/clear` command (session reset)
+- Logout
+- Any other session termination event
 
 ## Features
 
-✅ **Session health scoring** (NEW v0.5.0) - 0-100 automated assessment with 5-star rating
+✅ **Automatic session-end statistics** (NEW v0.7.0) - Full trip computer analytics displayed automatically when sessions end (exit, `/clear`, logout)
+✅ **Prompt quality analysis** (v0.6.0) - Detects 4 inefficient prompting patterns (vague questions, large pastes, repeated questions, missing constraints) with estimated savings
+✅ **Session health scoring** (v0.5.0) - 0-100 automated assessment with 5-star rating
 ✅ **Cost drivers breakdown** (NEW v0.5.0) - Visual analysis of what's driving costs (input/output/cache)
 ✅ **Model mix visibility** (NEW v0.5.0) - See which models used and switching suggestions
 ✅ **Efficiency metrics** (NEW v0.5.0) - Output/input ratio, cache hit rate, cost per token
