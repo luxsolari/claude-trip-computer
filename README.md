@@ -11,28 +11,6 @@ Real-time session analytics and optimization insights for Claude Code. TypeScrip
 - **Node.js 18+** - Check: `node --version` ([Download](https://nodejs.org/))
 - **Claude Code** - Latest version recommended
 
-### Plugin Marketplace Installation (Coming Soon)
-
-```bash
-# Add marketplace
-/plugin marketplace add yourusername/claude-trip-computer
-
-# Install plugin
-/plugin install claude-trip-computer@yourusername-claude-trip-computer
-
-# Configure statusline in ~/.claude/settings.json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "npx tsx ${CLAUDE_PLUGIN_ROOT}/src/index.ts"
-  }
-}
-
-# Configure billing mode (see Configuration section below)
-```
-
-**Note:** Marketplace distribution is available for easy installation and automatic updates. See `.claude-plugin/` directory for manifest files.
-
 ### Automated Installation (Recommended)
 
 **Windows:**
