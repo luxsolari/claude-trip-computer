@@ -1,10 +1,37 @@
-# Contributing to Claude Code Session Stats Tracking
+# Contributing to Claude Trip Computer
 
-Thank you for your interest in contributing! This project follows strict conventions to maintain consistency and quality.
+Thank you for your interest in contributing! This project maintains strict conventions for consistency and quality.
 
-## Development Conventions (REQUIRED)
+## Development Setup
 
-This project **strictly enforces** the following conventions for all contributions:
+### Prerequisites
+
+- **Node.js 18+** - Check: `node --version`
+- **TypeScript knowledge** - Familiarity with TypeScript syntax and types
+- **Git** - For version control
+
+### Initial Setup
+
+1. **Clone repository:**
+   ```bash
+   git clone <repository-url> claude-trip-computer
+   cd claude-trip-computer
+   ```
+
+2. **Test the application:**
+   ```bash
+   # Status line mode
+   npx tsx src/index.ts
+
+   # Trip computer mode
+   npx tsx src/index.ts --trip-computer
+   ```
+
+3. **Configure for testing:**
+   - Edit `~/.claude/settings.json` to point to your local copy
+   - Create test config in `~/.claude/hooks/.stats-config`
+
+## Development Conventions
 
 ### 1. Semantic Versioning (SemVer)
 
@@ -13,20 +40,21 @@ This project **strictly enforces** the following conventions for all contributio
 **Format:** `MAJOR.MINOR.PATCH`
 
 **Rules:**
-- **MAJOR** version: Increment for incompatible API changes or breaking changes
-  - Example: `1.0.0` → `2.0.0` (breaking change to script interface)
-- **MINOR** version: Increment for new backward-compatible functionality
-  - Example: `0.5.1` → `0.6.0` (added prompt analysis feature)
-- **PATCH** version: Increment for backward-compatible bug fixes
-  - Example: `0.6.0` → `0.6.1` (fixed Windows spaces-in-username compatibility)
+- **MAJOR (X.0.0):** Breaking changes to config format, API, or installation
+  - Example: v1.0.0 → v2.0.0 (incompatible config file format)
+- **MINOR (0.X.0):** New backward-compatible features
+  - Example: v0.12.0 → v0.13.0 (added multi-line status)
+- **PATCH (0.0.X):** Backward-compatible bug fixes
+  - Example: v0.13.0 → v0.13.2 (fixed cost calculation bug)
 
 **Files to Update:**
 1. `VERSION` - Single source of truth
-2. `CHANGELOG.md` - Document the version
-3. `CLAUDE.md` - Update version references
+2. `CHANGELOG.md` - Document the version with details
+3. `CLAUDE.md` - Update version references (header, last updated)
 4. `README.md` - Update version badge
-5. `install-claude-stats.sh` - Embedded script versions
-6. `~/.claude/hooks/*.sh` - Script header versions
+5. `src/index.ts` - Update version in header comment
+6. `install.sh` - Update version in header (if changed)
+7. `install.bat` - Update version in header (if changed)
 
 ### 2. Conventional Commits
 
@@ -42,292 +70,210 @@ This project **strictly enforces** the following conventions for all contributio
 ```
 
 **Allowed Types:**
-- `feat`: New feature (correlates with MINOR in SemVer)
-- `fix`: Bug fix (correlates with PATCH in SemVer)
-- `docs`: Documentation only changes
-- `style`: Code style changes (formatting, missing semicolons, etc.)
-- `refactor`: Code change that neither fixes a bug nor adds a feature
+- `feat`: New feature (MINOR version bump)
+- `fix`: Bug fix (PATCH version bump)
+- `docs`: Documentation only
+- `style`: Code formatting (no functional changes)
+- `refactor`: Code restructuring (no behavior changes)
 - `perf`: Performance improvement
-- `test`: Adding or updating tests
-- `build`: Changes to build system or dependencies
-- `ci`: Changes to CI configuration
-- `chore`: Other changes that don't modify src or test files
-- `revert`: Reverts a previous commit
-
-**Scopes (optional but recommended):**
-- `trip-computer`: Changes to show-session-stats.sh
-- `status-line`: Changes to brief-stats.sh
-- `installer`: Changes to install-claude-stats.sh
-- `docs`: Documentation changes
-- `pricing`: Pricing/cost calculation changes
+- `test`: Adding/updating tests
+- `chore`: Build process, dependencies, etc.
 
 **Examples:**
-
 ```bash
-# Feature addition (MINOR version bump)
-git commit -m "feat(trip-computer): add prompt quality analysis with 4 pattern detectors
+feat(analytics): add rate limit tracking to status line
 
-Implements automatic detection of inefficient prompting patterns.
-Adds vague questions, large pastes, repeated questions, and missing
-constraints detectors with estimated savings calculations."
+fix(transcript): correct per-model token aggregation
 
-# Bug fix (PATCH version bump)
-git commit -m "fix(status-line): correct token deduplication for multi-model sessions
+docs(readme): update TypeScript setup instructions
 
-Fixed issue where tokens were double-counted when multiple models
-were used in the same session."
-
-# Documentation update (no version bump)
-git commit -m "docs(readme): update installation instructions for Windows
-
-Added clarity around WSL vs Git Bash requirements."
-
-# Breaking change (MAJOR version bump)
-git commit -m "feat(installer): change billing config format to JSON
-
-BREAKING CHANGE: Config file format changed from bash source to JSON.
-Users must re-run installer to migrate configuration."
+refactor(cache): extract session cache to separate module
 ```
 
 **Breaking Changes:**
-- MUST include `BREAKING CHANGE:` in footer or `!` after type/scope
-- MUST bump MAJOR version
-- Example: `feat!: remove support for bash 3.x`
-
-### 3. Keep a Changelog
-
-**REQUIRED:** All changes MUST be documented in [CHANGELOG.md](CHANGELOG.md) following [Keep a Changelog 1.1.0](https://keepachangelog.com/)
-
-**Format:**
-```markdown
-## [Version] - YYYY-MM-DD
-
-### Added
-- New features
-
-### Changed
-- Changes in existing functionality
-
-### Deprecated
-- Soon-to-be removed features
-
-### Removed
-- Removed features
-
-### Fixed
-- Bug fixes
-
-### Security
-- Security improvements
-```
-
-**Rules:**
-1. **Unreleased section** at the top for upcoming changes
-2. **Version sections** in reverse chronological order
-3. **Dates** in ISO 8601 format (YYYY-MM-DD)
-4. **Grouping** by change type (Added, Changed, Fixed, etc.)
-5. **Descriptions** focus on user impact, not implementation details
-6. **Links** to version diffs at the bottom
-
-**Workflow:**
-1. Add changes to `[Unreleased]` section as you work
-2. When ready to release:
-   - Move `[Unreleased]` changes to new version section
-   - Add version number and date
-   - Update version links at bottom
-
-## Workflow for Making Changes
-
-### 1. Branch Naming
-
-Use descriptive branch names following this pattern:
-- `feature/v0.X-description` - New features
-- `fix/issue-description` - Bug fixes
-- `docs/topic` - Documentation updates
-- `refactor/component` - Code refactoring
-
-### 2. Development Process
-
 ```bash
-# 1. Create feature branch
-git checkout -b feature/v0.7-cache-optimization
+feat!: migrate from bash to TypeScript
 
-# 2. Make changes
-# ... edit files ...
-
-# 3. Update VERSION file
-echo "0.7.0" > VERSION
-
-# 4. Update CHANGELOG.md
-# Add entry under [Unreleased] or create new version section
-
-# 5. Update documentation
-# Update CLAUDE.md, README.md as needed
-
-# 6. Update installer if needed
-# Embed new script versions in install-claude-stats.sh
-
-# 7. Test changes
-./install-claude-stats.sh
-~/.claude/hooks/show-session-stats.sh
-
-# 8. Commit with conventional commit message
-git add -A
-git commit -m "feat(trip-computer): add cache optimization recommendations
-
-Analyzes cache hit patterns and suggests optimal session length
-based on cache efficiency trends over time.
-
-- Tracks cache performance over session lifetime
-- Recommends /clear when cache efficiency drops below 40%
-- Estimates savings from optimal session reset timing
-
-Technical:
-- Added cache trend analysis (20 lines)
-- Updated recommendation prioritization
-- Added unit tests for cache calculations"
-
-# 9. Push and create PR
-git push -u origin feature/v0.7-cache-optimization
+BREAKING CHANGE: All bash scripts removed. Users must reconfigure settings.json.
 ```
 
-### 3. Pre-Commit Checklist
+### 3. TypeScript Conventions
 
-Before committing, verify:
+**Style:**
+- Use strict TypeScript (`strict: true` in tsconfig.json)
+- Define interfaces in `types.ts`
+- Export types alongside implementations
+- Use ES2022 module syntax (`import/export`)
 
-- [ ] Version number updated in `VERSION` file (if applicable)
-- [ ] CHANGELOG.md updated with changes
-- [ ] All version references consistent across files
-- [ ] CLAUDE.md documentation updated (if applicable)
-- [ ] README.md updated (if user-facing changes)
-- [ ] Installer script updated (if script changes)
-- [ ] Commit message follows Conventional Commits format
-- [ ] Code tested (installer runs, trip computer works)
-- [ ] No syntax errors (`bash -n script.sh`)
-- [ ] Cross-platform compatibility maintained
-
-### 4. Pull Request Guidelines
-
-**PR Title:** Must follow Conventional Commits format
+**File Organization:**
 ```
-feat(trip-computer): add cache optimization recommendations
-```
-
-**PR Description Template:**
-```markdown
-## Summary
-Brief description of changes
-
-## Type of Change
-- [ ] feat: New feature (MINOR version bump)
-- [ ] fix: Bug fix (PATCH version bump)
-- [ ] docs: Documentation only
-- [ ] refactor: Code refactoring
-- [ ] BREAKING CHANGE (MAJOR version bump)
-
-## Changes Made
-- Bullet point list of specific changes
-- Focus on what changed and why
-
-## Testing
-- How was this tested?
-- Which platforms were tested?
-
-## Documentation
-- [ ] CHANGELOG.md updated
-- [ ] VERSION file updated (if applicable)
-- [ ] CLAUDE.md updated (if applicable)
-- [ ] README.md updated (if applicable)
-
-## Checklist
-- [ ] Follows Conventional Commits
-- [ ] Follows Semantic Versioning
-- [ ] All version references consistent
-- [ ] Tests pass
-- [ ] Documentation complete
+src/
+├── index.ts              # Entry point (mode detection, orchestration)
+├── transcript.ts         # Domain logic (parsing, deduplication)
+├── analytics.ts          # Business logic (health, recommendations)
+├── cache.ts              # Infrastructure (persistence)
+├── usage-api.ts          # External services (OAuth API)
+├── stdin.ts              # Infrastructure (Claude Code integration)
+├── types.ts              # Type definitions (shared interfaces)
+├── constants.ts          # Configuration (pricing, constants)
+├── render/               # Presentation layer
+│   ├── status-line.ts    # Brief output formatter
+│   └── trip-computer.ts  # Detailed output formatter
+└── utils/                # Utilities
+    └── config.ts         # Config file reading
 ```
 
-## Version Release Process
+**Naming Conventions:**
+- **Classes:** PascalCase (e.g., `TranscriptParser`, `SessionCacheManager`)
+- **Functions:** camelCase (e.g., `readStdin`, `calculateCost`)
+- **Interfaces:** PascalCase (e.g., `SessionMetrics`, `TokenUsage`)
+- **Constants:** SCREAMING_SNAKE_CASE (e.g., `MODEL_PRICING`, `CACHE_TTL_SECONDS`)
+- **Files:** kebab-case (e.g., `trip-computer.ts`, `status-line.ts`)
 
-### Creating a New Release
-
-```bash
-# 1. Ensure you're on master/main branch
-git checkout master
-git pull
-
-# 2. Create release branch
-git checkout -b release/v0.7.0
-
-# 3. Update VERSION file
-echo "0.7.0" > VERSION
-
-# 4. Update CHANGELOG.md
-# Move [Unreleased] changes to [0.7.0] with current date
-
-# 5. Update all documentation
-# Ensure all version references are consistent
-
-# 6. Commit release
-git commit -m "chore(release): bump version to 0.7.0
-
-Updated VERSION, CHANGELOG.md, and all documentation
-for v0.7.0 release."
-
-# 7. Merge to master
-git checkout master
-git merge release/v0.7.0
-
-# 8. Create git tag
-git tag -a v0.7.0 -m "Release v0.7.0
-
-Cache optimization recommendations
-- Analyzes cache hit patterns
-- Suggests optimal session length
-- Estimates savings from reset timing"
-
-# 9. Push with tags
-git push origin master --tags
-
-# 10. Clean up release branch
-git branch -d release/v0.7.0
+**Example Interface:**
+```typescript
+export interface SessionMetrics {
+  session_id: string;
+  message_count: number;
+  tool_count: number;
+  total_tokens: TokenUsage;
+  models: Record<string, ModelUsage>;
+  cache_efficiency: number;
+  tokens_per_message: number;
+  tools_per_message: number;
+  total_cost: number;
+}
 ```
 
-## Code Style Guidelines
+### 4. Code Patterns
 
-### Bash Scripts
+**Error Handling:**
+```typescript
+try {
+  // ... operation
+} catch (error) {
+  console.error('[claude-trip-computer] Error:',
+    error instanceof Error ? error.message : 'Unknown error'
+  );
+  console.log('💬 Error | 📈 /trip');
+}
+```
 
-- Use `#!/bin/bash` shebang
-- Set `set -e` for error handling
-- Use `set -u` if appropriate (all vars defined)
-- Export `LC_NUMERIC=C` for number formatting
-- Use `[[ ]]` instead of `[ ]` for conditionals
-- Quote all variable expansions: `"$VAR"`
-- Use `local` for function variables
-- Add comments for complex logic
-- Keep functions under 50 lines when possible
+**Safe Optional Access:**
+```typescript
+const modelName = getModelName(stdinData);  // Returns 'Unknown' if missing
+const context = getContextWindow(stdinData);  // Returns null if missing
 
-### jq Queries
+if (context) {
+  // Use context data
+}
+```
 
-- Use multiline format for readability
-- Add comments explaining complex filters
-- Test with various input scenarios
-- Handle null/empty cases with `// 0` or `// empty`
+**Token Formatting:**
+```typescript
+function formatTokens(count: number): string {
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
+  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K`;
+  return `${Math.round(count)}`;
+}
+```
 
-### Documentation
+## Testing Checklist
 
-- Use markdown format
-- Include code examples
-- Document all parameters and return values
-- Update CLAUDE.md for technical details
-- Update README.md for user-facing changes
+Before submitting a pull request:
 
-## Questions or Issues?
+- [ ] Test status line: `npx tsx src/index.ts`
+- [ ] Test trip computer: `npx tsx src/index.ts --trip-computer`
+- [ ] Verify per-model cost calculations are accurate
+- [ ] Test both API and Subscription billing modes
+- [ ] Test with multiple model types (Opus, Sonnet, Haiku)
+- [ ] Verify token deduplication works correctly
+- [ ] Check that cache system functions properly
+- [ ] Update version numbers in all required files
+- [ ] Update CHANGELOG.md with your changes
+- [ ] Run TypeScript compiler: `npx tsc --noEmit` (no errors)
+- [ ] Test on your platform (macOS/Linux/Windows)
 
-- Check [CLAUDE.md](CLAUDE.md) for technical documentation
-- Review [CHANGELOG.md](CHANGELOG.md) for version history
-- See existing commits for examples of good commit messages
+## Pull Request Process
 
-## License
+1. **Create a feature branch:**
+   ```bash
+   git checkout -b feat/your-feature-name
+   ```
 
-By contributing, you agree that your contributions will be licensed under the same license as this project.
+2. **Make your changes:**
+   - Follow conventions above
+   - Update documentation
+   - Add entries to CHANGELOG.md
+
+3. **Commit with conventional commits:**
+   ```bash
+   git add .
+   git commit -m "feat(scope): description"
+   ```
+
+4. **Test thoroughly:**
+   - Run through testing checklist
+   - Verify no TypeScript errors
+
+5. **Submit pull request:**
+   - Clear description of changes
+   - Reference any related issues
+   - Include testing notes
+
+## Code Review Criteria
+
+Contributions will be reviewed for:
+
+1. **Correctness:** Does it work as intended?
+2. **Type Safety:** Proper TypeScript types?
+3. **Performance:** No unnecessary parsing/computation?
+4. **Maintainability:** Clear, readable code?
+5. **Documentation:** Updated README/CLAUDE.md?
+6. **Conventions:** Follows all required conventions?
+7. **Testing:** Tested on target platforms?
+
+## Common Contribution Areas
+
+### Adding New Metrics
+
+1. **Update `SessionMetrics` interface** in `types.ts`
+2. **Calculate metric** in `transcript.ts` or `analytics.ts`
+3. **Render metric** in `status-line.ts` or `trip-computer.ts`
+4. **Update documentation** in README.md
+5. **Bump MINOR version** (new feature)
+
+### Fixing Bugs
+
+1. **Identify root cause** (add comments explaining fix)
+2. **Make minimal changes** (don't refactor unrelated code)
+3. **Test fix thoroughly** (prevent regressions)
+4. **Update CHANGELOG.md** with fix description
+5. **Bump PATCH version** (bug fix)
+
+### Improving Documentation
+
+1. **Update relevant .md files**
+2. **Ensure examples are current** (test all code blocks)
+3. **Commit with `docs:` prefix**
+4. **No version bump needed** (unless major doc rewrite)
+
+### Adding Model Support
+
+1. **Add pricing to `MODEL_PRICING`** in `constants.ts`
+2. **Add detection pattern** in `formatModelName()` method
+3. **Test with transcripts** using new model
+4. **Update pricing table** in README.md and CLAUDE.md
+5. **Bump MINOR version** (new feature)
+
+## Questions?
+
+- **Technical questions?** Review [CLAUDE.md](CLAUDE.md) for architecture details
+- **Setup issues?** Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+- **Usage questions?** See [README.md](README.md)
+
+---
+
+**Thank you for contributing!** Your improvements help make Claude Trip Computer better for everyone.
+
+**Last Updated:** 2026-01-12 (v0.13.2)

@@ -1,322 +1,180 @@
-# Troubleshooting & Manual Installation Guide
+# Troubleshooting Guide
 
-**Version 0.6.8** | [Back to README](README.md)
+This guide helps resolve common issues with Claude Trip Computer (v0.13.0 TypeScript).
 
-This guide helps you troubleshoot common issues and provides manual installation instructions if needed.
+## Installation Issues
 
----
+### Try the Automated Installer First
 
-## Table of Contents
+If you haven't already, run the automated installer:
 
-1. [Quick Fixes](#quick-fixes)
-2. [Common Issues](#common-issues)
-3. [Verification Steps](#verification-steps)
-4. [Manual Installation](#manual-installation-advanced)
-5. [Platform-Specific Notes](#platform-specific-notes)
-
----
-
-## Quick Fixes
-
-### Status Line Not Updating
+**Linux/macOS:**
 ```bash
-# Solution 1: Restart Claude Code completely
-# Solution 2: Test script manually
-bash ~/.claude/hooks/brief-stats.sh
-
-# Solution 3: Check settings.json
-cat ~/.claude/settings.json
+./install.sh
 ```
 
-### Costs Seem Wrong
-```bash
-# Compare with official /cost command
-# Expected variance: 0-10% (with 5% safety margin)
-# Script should be slightly higher than /cost (conservative)
+**Windows:**
+```cmd
+install.bat
 ```
 
-### Windows: Username with Spaces
+The installer handles all configuration automatically and tests the setup.
+
+### Installer Fails
+
+If the installer fails, check the error message and proceed to the relevant section below.
+
+## Quick Checks
+
+### 1. Verify Node.js Installation
 ```bash
-# If your username has spaces (e.g., "Lux Solari"):
-# - Installer v0.6.1+ handles this automatically
-# - Or manually edit settings.json to wrap path in quotes:
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bash \"/c/Users/Your Name/.claude/hooks/brief-stats.sh\""
-  }
+node --version  # Should be 18.0.0 or higher
+```
+
+If Node.js is missing, install from https://nodejs.org/
+
+### 2. Verify Status Line Configuration
+```bash
+cat ~/.claude/settings.json | grep -A 3 statusLine
+```
+
+Should show:
+```json
+"statusLine": {
+  "type": "command",
+  "command": "npx -y tsx /full/path/to/claude-trip-computer/src/index.ts"
 }
 ```
 
-### Permission Denied Errors
+### 3. Test Script Manually
 ```bash
-# Make scripts executable
-chmod +x ~/.claude/hooks/*.sh
+cd /path/to/claude-trip-computer
+npx tsx src/index.ts
 ```
 
----
+Should display status line output (not errors).
+
+### 4. Test Trip Computer
+```bash
+npx tsx src/index.ts --trip-computer
+```
+
+Should display full analytics dashboard.
 
 ## Common Issues
 
-### 1. Status Line Shows All Zeros
+### Status Line Shows "Error"
 
-**Symptoms**: `💬 0 msgs | 🔧 0 tools | 🎯 0 tok | ⚡ 0% eff`
-
-**Causes & Solutions**:
-- **Transcript not found**: Check `~/.claude/projects/` directory exists
-- **Wrong project mapping**: Verify project directory name (uses `-` instead of `/` and `_`)
-- **New session**: Expected behavior for brand new sessions
-
-**Debug**:
-```bash
-# Check debug log (if you added debug logging)
-cat ~/.claude/hooks/brief-stats-debug.log
-
-# Manually test with current directory
-cd /path/to/your/project
-bash ~/.claude/hooks/brief-stats.sh
+**Symptoms:**
+```
+💬 Error | 📈 /trip
 ```
 
-### 2. "/trip-computer" Command Not Found
+**Causes & Fixes:**
 
-**Cause**: Slash command not installed
+1. **Path incorrect in settings.json**
+   - Fix: Use absolute path, not relative
+   - Example: `/Users/username/Code/claude-trip-computer/src/index.ts`
+   - NOT: `~/Code/claude-trip-computer/src/index.ts`
 
-**Solution**:
-```bash
-# Check if command file exists
-ls ~/.claude/commands/trip-computer.md
+2. **Node.js not in PATH**
+   - Fix: Restart terminal or add to PATH
+   - Test: `which node` should return path
 
-# If missing, reinstall:
-./install-claude-stats.sh
+3. **tsx not installing**
+   - Fix: Run manually first: `npm install -g tsx`
+   - Alternative: Use `node --loader tsx` instead of `npx tsx`
+
+4. **Transcript file not found**
+   - Check: `ls ~/.claude/projects/`
+   - Ensure you're in a project directory with session history
+
+### Status Line Shows Zeros
+
+**Symptoms:**
+```
+💬 0 msgs | 🔧 0 tools | 🎯 0 tok
 ```
 
-### 3. Wrong Billing Mode Icon
+**Causes & Fixes:**
 
-**Symptoms**: Shows 💳 but you have subscription (or vice versa)
+1. **New session (no history yet)**
+   - Expected: First interaction shows zeros
+   - Solution: Normal, will populate after first message
 
-**Solution**:
-```bash
-# Edit config file
-nano ~/.claude/hooks/.stats-config
+2. **Wrong project directory**
+   - Check: Transcript files in `~/.claude/projects/`
+   - Solution: Verify working directory matches project
 
-# Change to:
-BILLING_MODE="Sub"    # or "API"
-BILLING_ICON="📅"     # or "💳"
+3. **Transcript parsing error**
+   - Check: `npx tsx src/index.ts 2>&1 | grep Error`
+   - Solution: Check transcript file permissions
+
+### Trip Computer Not Showing
+
+**Issue:** When you ask for trip computer stats, only see command documentation.
+
+**Explanation:** `/trip` is a user skill that requires the assistant to invoke it.
+
+**Solutions:**
+1. **Ask Claude:** "Show me the trip computer stats" or "Run trip computer"
+2. **Run directly:**
+   ```bash
+   npx tsx /path/to/claude-trip-computer/src/index.ts --trip-computer
+   ```
+
+### Model Mix Shows 0% Cost
+
+**Fixed in v0.13.0**
+
+If you see this on older versions, update to v0.13.0+.
+
+### Context Tracking Unavailable
+
+**Symptoms:**
+```
+Context Management: ➡️ 15/30 points
+Context tracking unavailable
 ```
 
-### 4. Cache Efficiency Always 0%
+**Explanation:** Context data only available when running as status line (stdin access).
 
-**Cause**: Session too short or cache not yet utilized
+**Workaround:** Use `/context` command for accurate context information.
 
-**Solution**: Normal for sessions <5 messages. Cache reads increase over time.
+**Not Available When:**
+- Running directly via bash (no stdin from Claude Code)
+- Testing manually with `npx tsx`
 
-### 5. jq or bc Not Found
+**Available When:**
+- Configured as status line in settings.json
+- Claude Code invokes the script automatically
 
-**Symptoms**: Scripts fail with "command not found"
+## Manual Setup (Step by Step)
 
-**Solution (Automatic)**:
+### 1. Install Prerequisites
+
+**Node.js 18+:**
 ```bash
-# Linux/macOS: Run installer, it will auto-install
-./install-claude-stats.sh
+# macOS (Homebrew)
+brew install node
 
-# Windows: Use batch installer
-install-claude-stats.bat
-```
-
-**Solution (Manual)**:
-```bash
-# Linux
-sudo apt-get install jq bc    # Debian/Ubuntu
-sudo dnf install jq bc         # Fedora/RHEL
-sudo pacman -S jq bc          # Arch
-
-# macOS
-brew install jq               # bc is pre-installed
+# Ubuntu/Debian
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
 
 # Windows
-choco install jq              # via Chocolatey
-
-# Windows - bc manual install (if not included with Git Bash)
-# See: https://stackoverflow.com/a/57787863/32131291
-# Options:
-# 1. Install MSYS2, run 'pacman -S bc', copy bc.exe to Git\usr\bin
-# 2. Download bc package from https://packages.msys2.org/packages/bc
-#    Extract with 7-Zip and copy bc.exe to Git\usr\bin
+# Download from https://nodejs.org/
 ```
 
----
-
-## Verification Steps
-
-### Check Installation
-
-Run these commands to verify everything is installed correctly:
+### 2. Clone Repository
 
 ```bash
-# 1. Check directory structure
-ls -la ~/.claude/hooks/
-ls -la ~/.claude/commands/
-
-# Expected files:
-# ~/.claude/hooks/brief-stats.sh          (executable)
-# ~/.claude/hooks/show-session-stats.sh   (executable)
-# ~/.claude/hooks/.stats-config           (readable)
-# ~/.claude/commands/trip-computer.md     (readable)
-
-# 2. Verify executability
-[ -x ~/.claude/hooks/brief-stats.sh ] && echo "✓ brief-stats.sh is executable" || echo "✗ Not executable"
-[ -x ~/.claude/hooks/show-session-stats.sh ] && echo "✓ show-session-stats.sh is executable" || echo "✗ Not executable"
-
-# 3. Check settings.json
-cat ~/.claude/settings.json
-
-# Should contain:
-# {
-#   "statusLine": {
-#     "type": "command",
-#     "command": "bash ~/.claude/hooks/brief-stats.sh"
-#   }
-# }
-
-# 4. Test scripts manually
-bash ~/.claude/hooks/brief-stats.sh
-bash ~/.claude/hooks/show-session-stats.sh
-
-# 5. Check version
-grep "Version" ~/.claude/hooks/brief-stats.sh
+cd ~/Code  # or your preferred location
+git clone <repository-url> claude-trip-computer
+cd claude-trip-computer
 ```
 
-### Test in Claude Code
-
-1. Open Claude Code in a project directory
-2. Check bottom status bar for stats line
-3. Run `/trip-computer` command
-4. Compare with `/cost` command (should be within 0-10%)
-
----
-
-## Manual Installation (Advanced)
-
-**⚠️ Warning**: The automated installer is strongly recommended. It handles:
-- Prerequisite detection and installation
-- OS-specific configurations
-- Proper permissions
-- Configuration file generation
-
-If you must install manually (e.g., installer fails, custom modifications needed):
-
-### Step 0: Install Prerequisites
-
-**Automated (Recommended)**:
-```bash
-# Linux/macOS
-./install-claude-stats.sh
-# Installer will detect missing packages and offer to install them
-
-# Windows
-install-claude-stats.bat
-# Batch file will detect missing packages and use Chocolatey
-```
-
-**Manual Installation**:
-```bash
-# Linux - Debian/Ubuntu
-sudo apt-get update
-sudo apt-get install -y jq bc
-
-# Linux - Fedora/RHEL
-sudo dnf install -y jq bc
-
-# Linux - Arch
-sudo pacman -S jq bc
-
-# macOS
-brew install jq
-# bc is pre-installed on macOS
-
-# Windows
-# Install Chocolatey first: https://chocolatey.org/install
-choco install jq
-# bc is included with Git Bash
-```
-
-### Step 1: Create Directory Structure
-
-```bash
-mkdir -p ~/.claude/hooks
-mkdir -p ~/.claude/commands
-```
-
-### Step 2: Get Script Contents
-
-**DO NOT copy scripts from old documentation** - they may be outdated.
-
-**Method 1** (Recommended): Extract from installer
-```bash
-# View current scripts in installer
-less install-claude-stats.sh
-
-# Extract brief-stats.sh (lines ~145-420)
-sed -n '145,420p' install-claude-stats.sh > ~/.claude/hooks/brief-stats.sh
-
-# Extract show-session-stats.sh (lines ~430-1320)  
-sed -n '430,1320p' install-claude-stats.sh > ~/.claude/hooks/show-session-stats.sh
-
-# Note: Line numbers may vary between versions
-# Search for "#!/bin/bash" markers in installer to find exact ranges
-```
-
-**Method 2**: Copy from working installation
-```bash
-# If you have access to a working installation
-scp user@working-machine:~/.claude/hooks/*.sh ~/.claude/hooks/
-```
-
-### Step 3: Create Configuration
-
-Create `~/.claude/hooks/.stats-config`:
-
-```bash
-cat > ~/.claude/hooks/.stats-config << 'EOF'
-# Claude Code Session Stats Configuration
-BILLING_MODE="API"    # or "Sub" for subscription
-BILLING_ICON="💳"     # or "📅" for subscription
-
-# Cost Estimate Safety Margin (conservative buffer)
-# 1.00 = exact, 1.05 = 5% buffer, 1.10 = 10% buffer
-SAFETY_MARGIN="1.05"
-EOF
-```
-
-### Step 4: Create Slash Command
-
-Create `~/.claude/commands/trip-computer.md`:
-
-```bash
-cat > ~/.claude/commands/trip-computer.md << 'EOF'
----
-name: trip-computer
----
-
-Execute the session statistics script and display its output directly in your message text (not in a code block) so it's immediately visible without requiring expansion:
-
-1. Run: ~/.claude/hooks/show-session-stats.sh
-2. Capture the output
-3. Display the full output as plain text in your response
-4. Do not add any commentary, analysis, or interpretation - just show the trip computer output
-EOF
-```
-
-### Step 5: Set Permissions
-
-```bash
-chmod +x ~/.claude/hooks/brief-stats.sh
-chmod +x ~/.claude/hooks/show-session-stats.sh
-chmod 644 ~/.claude/hooks/.stats-config
-chmod 644 ~/.claude/commands/trip-computer.md
-```
-
-### Step 6: Configure settings.json
+### 3. Configure Status Line
 
 Edit `~/.claude/settings.json`:
 
@@ -324,137 +182,136 @@ Edit `~/.claude/settings.json`:
 {
   "statusLine": {
     "type": "command",
-    "command": "bash ~/.claude/hooks/brief-stats.sh"
+    "command": "npx -y tsx /Users/username/Code/claude-trip-computer/src/index.ts"
   }
 }
 ```
 
-**Windows Git Bash** - if username has spaces, use quotes:
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bash \"/c/Users/Your Name/.claude/hooks/brief-stats.sh\""
-  }
-}
+**Important:** Use your actual absolute path!
+
+### 4. Create Billing Config
+
+Create `~/.claude/hooks/.stats-config`:
+
+```bash
+# Create directory if needed
+mkdir -p ~/.claude/hooks
+
+# Create config file
+cat > ~/.claude/hooks/.stats-config << 'EOF'
+# Claude Code Session Stats Configuration
+BILLING_MODE="API"  # or "Sub" for subscription
+BILLING_ICON="💳"   # or "📅" for subscription
+SAFETY_MARGIN="1.00"  # 1.10 for subscription (10% buffer)
+EOF
 ```
 
-### Step 7: Restart Claude Code
+### 5. Restart Claude Code
 
-Close and reopen Claude Code completely for changes to take effect.
+Close and reopen Claude Code to activate the status line.
 
----
+### 6. Verify Installation
 
-## Platform-Specific Notes
+Status line should appear at bottom of Claude Code window.
+
+## Platform-Specific Issues
 
 ### macOS
 
-**Default bash**: macOS Catalina+ uses zsh by default, but ships with bash 3.2.57 which works fine.
+**Issue:** "Permission denied" when running tsx
 
-**BSD vs GNU tools**: Scripts use BSD-compatible commands:
-- `stat -f %m` (macOS) vs `stat -c %Y` (Linux)
-- Both versions included in scripts
-
-**Homebrew**: Used for installing prerequisites
+**Fix:**
 ```bash
-brew install jq    # Usually already present
-# bc typically pre-installed
+chmod +x /path/to/claude-trip-computer/src/index.ts
+```
+
+**Issue:** "node: command not found"
+
+**Fix:**
+```bash
+# Verify Node.js installed
+which node
+
+# If missing, install via Homebrew
+brew install node
 ```
 
 ### Linux
 
-**Distribution differences**:
-- Debian/Ubuntu: `apt-get install jq bc`
-- Fedora/RHEL: `dnf install jq bc`  
-- Arch: `pacman -S jq bc`
+**Issue:** "npx: command not found"
 
-**bash version**: Any version 3.2+ works (tested on 3.2-5.2)
-
-**File paths**: Standard Unix paths, no special handling needed
-
-### Windows (Git Bash)
-
-**Requirements**:
-- Git Bash (recommended) or WSL
-- Prerequisites: jq, bc
-
-**Easy Installation**:
-```
-# Double-click this file:
-install-claude-stats.bat
-
-# It will automatically:
-# - Detect Git Bash
-# - Check for jq and bc
-# - Install via Chocolatey if needed
-# - Run the bash installer
-```
-
-**Path handling**:
-- Scripts auto-detect `/c/Users/` style paths
-- Converts Windows paths to Git Bash format
-- Handles spaces in usernames (v0.6.1+)
-
-**HOME variable**: Script normalizes `HOME` if set to `/home/Username` instead of `/c/Users/username`
-
-**Line endings**: Use Unix (LF) not Windows (CRLF)
+**Fix:**
 ```bash
-# Convert if needed
-dos2unix ~/.claude/hooks/*.sh
+# Ensure npm is installed with Node.js
+sudo apt-get install npm
+
+# Or use n to manage Node versions
+npm install -g n
+sudo n latest
 ```
 
----
+### Windows
+
+**Issue:** "npx is not recognized"
+
+**Fix:**
+- Ensure Node.js installed from https://nodejs.org/
+- Restart terminal/PowerShell after installation
+- Add to PATH if needed: `C:\Program Files\nodejs\`
+
+**Issue:** Path with spaces
+
+**Fix:** Use quotes in settings.json:
+```json
+"command": "npx -y tsx \"C:\\Users\\Your Name\\Code\\claude-trip-computer\\src\\index.ts\""
+```
+
+## Performance Issues
+
+### Slow Status Line Updates
+
+**Cause:** Cache not working, parsing transcript every time.
+
+**Check:**
+```bash
+ls -la ~/.claude/session-stats/
+```
+
+Should show recent `.json` cache files.
+
+**Fix:**
+- Ensure `~/.claude/session-stats/` directory exists and is writable
+- Check disk space: `df -h ~`
+
+### High CPU Usage
+
+**Cause:** Parsing very large transcripts repeatedly.
+
+**Solution:**
+- Use `/clear` to reset session if transcript is huge (>1000 messages)
+- Cache should prevent repeated parsing (5-second TTL)
 
 ## Getting Help
 
-### Check Version
-```bash
-grep "Version" ~/.claude/hooks/brief-stats.sh
-cat VERSION
-```
+**Still having issues?**
 
-### Useful Debug Commands
-```bash
-# Check Claude Code projects directory
-ls ~/.claude/projects/
+1. Check console output:
+   ```bash
+   npx tsx src/index.ts 2>&1
+   ```
 
-# Find recent transcripts
-find ~/.claude/projects/ -name "*.jsonl" -mtime -1
+2. Verify configuration files exist:
+   ```bash
+   ls -la ~/.claude/settings.json
+   ls -la ~/.claude/hooks/.stats-config
+   ```
 
-# Test token counting
-jq -s '[.[] | select(.message.usage)] | length' ~/.claude/projects/*/LATEST_SESSION.jsonl
+3. Check repository for updates: Latest version may fix your issue
 
-# Check config
-cat ~/.claude/hooks/.stats-config
-```
+4. Review [README.md](README.md) for setup instructions
 
-### Still Stuck?
-
-1. **Check CHANGELOG.md** - Recent fixes for your issue
-2. **Check CLAUDE.md** - Technical implementation details  
-3. **Re-run installer** - Often fixes configuration issues
-4. **Compare with `/cost`** - Official billing for validation
-
-### Reporting Issues
-
-When reporting issues, include:
-- Version number (`cat VERSION`)
-- Platform (OS, bash version)
-- Output of `bash -x ~/.claude/hooks/brief-stats.sh` (debug mode)
-- `/cost` output for comparison
-- Any error messages
+5. Check [CLAUDE.md](CLAUDE.md) for technical details
 
 ---
 
-## Reference Documentation
-
-- **README.md** - Quick start and overview
-- **CLAUDE.md** - Complete technical documentation
-- **CHANGELOG.md** - Version history and changes
-- **CONTRIBUTING.md** - Development guidelines
-- **install-claude-stats.sh** - Authoritative script source
-
----
-
-**Last Updated**: 2026-01-03 (v0.6.8)
-
+**Last Updated:** 2026-01-12 (v0.13.2)

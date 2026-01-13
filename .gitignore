@@ -8,3 +8,18 @@
 # AI assistant directories
 .claude/
 .claude/*
+
+# Node.js
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temp files
+tmpclaude-*
+undefined/
+
+# Test artifacts
+coverage/
+*.log

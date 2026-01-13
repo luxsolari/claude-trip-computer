@@ -1,90 +1,332 @@
-# Claude Code Session Stats Tracking
+# Claude Trip Computer
 
-**Version 0.6.8** | [Changelog](CHANGELOG.md)
+**Version 0.13.2** | [Changelog](CHANGELOG.md)
 
-Real-time cost tracking and advanced analytics for your Claude Code sessions.
+Real-time session analytics and optimization insights for Claude Code. TypeScript-powered with multi-line status display, git integration, tool activity tracking, and efficiency metrics.
 
-## Quick Install
+## Quick Setup
 
-### Windows Users
-**Double-click installer:**
-```
-install-claude-stats.bat
-```
-- Automatically detects and installs prerequisites (jq, bc)
-- Requires Git for Windows
+### Prerequisites
 
-**Or use bash:**
+- **Node.js 18+** - Check: `node --version` ([Download](https://nodejs.org/))
+- **Claude Code** - Latest version recommended
+
+### Plugin Marketplace Installation (Coming Soon)
+
 ```bash
-./install-claude-stats.sh
+# Add marketplace
+/plugin marketplace add yourusername/claude-trip-computer
+
+# Install plugin
+/plugin install claude-trip-computer@yourusername-claude-trip-computer
+
+# Configure statusline in ~/.claude/settings.json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "npx tsx ${CLAUDE_PLUGIN_ROOT}/src/index.ts"
+  }
+}
+
+# Configure billing mode (see Configuration section below)
 ```
 
-### Linux/macOS Users
+**Note:** Marketplace distribution is available for easy installation and automatic updates. See `.claude-plugin/` directory for manifest files.
+
+### Automated Installation (Recommended)
+
+**Windows:**
+```cmd
+# Double-click or run:
+install.bat
+```
+
+**Linux/macOS:**
 ```bash
-./install-claude-stats.sh
+./install.sh
 ```
-- Automatically detects and installs prerequisites if missing
-- Supports apt-get, dnf, pacman (Linux) and Homebrew (macOS)
 
-**Time:** ~2 minutes | Auto-detects OS, installs prerequisites, configures everything
+The installer will:
+- ✓ Check Node.js version (18+ required)
+- ✓ Detect and remove old bash-based installations automatically
+- ✓ Prompt for billing mode (API or Subscription)
+- ✓ Create configuration files
+- ✓ Update Claude Code settings
+- ✓ Create `/trip` command
+- ✓ Test the installation
+
+**Time:** ~2 minutes | **Then restart Claude Code**
+
+> **Upgrading from bash version?** The installer automatically detects and removes old bash scripts, hooks, and cache files. No manual cleanup needed!
+
+### Manual Installation
+
+<details>
+<summary>Click to expand manual setup instructions</summary>
+
+1. **Clone repository:**
+   ```bash
+   cd ~/Code  # or your preferred location
+   git clone <repository-url> claude-trip-computer
+   ```
+
+2. **Configure billing mode:**
+
+   Create `~/.claude/hooks/.stats-config`:
+   ```bash
+   # Claude Code Session Stats Configuration
+   BILLING_MODE="API"  # or "Sub" for subscription
+   BILLING_ICON="💳"   # or "📅" for subscription
+   SAFETY_MARGIN="1.00"  # 1.10 for subscription (10% buffer)
+   ```
+
+3. **Configure Claude Code status line:**
+
+   Edit `~/.claude/settings.json`:
+   ```json
+   {
+     "statusLine": {
+       "type": "command",
+       "command": "npx -y tsx /full/path/to/claude-trip-computer/src/index.ts"
+     }
+   }
+   ```
+
+   Replace `/full/path/to/` with your actual path.
+
+4. **Restart Claude Code**
+
+**Time:** ~5 minutes
+
+</details>
 
 ### Need Help?
 - **Troubleshooting** → [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-- **Manual Installation** → See troubleshooting guide (advanced users only)
 - **Technical Docs** → [CLAUDE.md](CLAUDE.md)
 
 ## What You Get
 
 ### Status Line
-**Real-time efficiency and cost tracking:**
-```
-💬 28 msgs | 🔧 185 tools | 🎯 13.5M tok | ⚡ 91% eff | 💳 ~$11.39 ($0.41/msg) | 📊 /trip-computer
-```
-- **⚡ 91% eff** - Cache efficiency showing how well prompt caching is working
-- **($0.41/msg)** - Cost per message for immediate spending awareness and trajectory tracking
-- **📊 /trip-computer** - Quick reminder to check detailed analytics
+**Real-time session efficiency metrics in your Claude Code status bar:**
 
-Or when agents are working:
+**Multi-Line Status (v0.13.2):**
+```
+💬 5 msgs (Opus 4.5) | 🔧 12 tools (2.4/msg) | 🎯 15.3K tok | 🌿 main* | ████░░░░░░ 35% | ⚡ 78% cached | 📝 3.1K/msg | ⏱️ 31m | 📈 /trip
+✓ Edit ×55 | ✓ Bash ×41 | ✓ Read ×23 | ✓ Write ×8
+✓ Explore: Explore codebase structure (52s)
+▸ Fix authentication bug (2/5)
+```
+
+**Line 1 - Session Metrics:**
+- **💬 5 msgs (Opus 4.5)** - Message count with current model
+- **🔧 12 tools (2.4/msg)** - Tool usage with intensity ratio
+- **🎯 15.3K tok** - Total tokens (deduplicated)
+- **🌿 main*** - Git branch with dirty indicator (NEW)
+- **████░░░░░░ 35%** - Context window usage bar
+- **⚡ 78% cached** - Cache efficiency
+- **📝 3.1K/msg** - Response verbosity
+- **⏱️ 31m** - Session duration (NEW)
+- **📈 /trip** - Trip computer link
+- **📅 ~$X.XX value** (Sub users only) - API-equivalent value
+
+**Line 2 - Tool Activity (NEW):**
+- Top 5 tools by frequency with accurate session-wide counts
+- Running tools: `◐ Bash: command...`
+
+**Lines 3+ - Agent Status (NEW, when agents exist):**
+- Shows running/completed agents with duration
+
+**Final Line - Todo Progress (NEW, when todos exist):**
+- In progress: `▸ Task name (2/5)`
+- Complete: `✓ All todos complete (5/5)`
+
+**Or when analyzing:**
 ```
 🤖 Sub-agents running, stand by...
 ```
 
-### Trip Computer (`/trip-computer`)
-**Advanced analytics dashboard with health scoring and optimization:**
+### Trip Computer
 
-**What You Get:**
-- 📈 **Session Health Score** (0-100) - Automated health assessment with 5-star rating
-- 🤖 **Model Mix Breakdown** - See which models you used and their cost contribution
-- 💵 **Cost Drivers Analysis** - Visual breakdown showing what's expensive (input/output/cache)
-- ⚡ **Efficiency Metrics** - Output/input ratio, cache hit rate, cost per token
-- 🎯 **Prioritized Recommendations** - Top 3 actions ranked by potential savings (e.g., "Save $0.60/10 msgs")
-- 📊 **Best-effort cost estimates** from session transcript (typically within 10% of actual)
-- 📈 **Trajectory Projections** - Next 10 messages, hourly rate estimates
-- ⚠️ **Context Growth Warnings** - When to use `/clear` for better performance
+Ask Claude to show trip computer stats, or run directly:
+```bash
+npx tsx /path/to/claude-trip-computer/src/index.ts --trip-computer
+```
 
-**For API Users:**
-- Reminds you to run `/cost` separately for official billing comparison
-- Estimates help with real-time decision making between interactions
+**Session optimization dashboard with complete billing-mode differentiation:**
 
-**For Subscription Users:**
-- Shows API-equivalent estimates to understand rate limit impact
-- No actual charges (usage included in subscription)
+**For API Users** - Optimization-First Experience:
+```
+═══════════════════════════════════════════════════════════════
+  📊 TRIP COMPUTER - Session Analytics Dashboard
+═══════════════════════════════════════════════════════════════
+
+📊 QUICK SUMMARY
+───────────────────────────────────────────────────────────────
+  Health: ⭐⭐⭐⭐⭐ Excellent (85/100)
+  Messages: 3 | Tools: 46 | Tokens: 3.8M
+
+📈 SESSION HEALTH (0-100)
+───────────────────────────────────────────────────────────────
+  Overall: ⭐⭐⭐⭐⭐ 85/100
+
+  ⚡ Cache Efficiency: ✅ 40/40 points
+     90% cache hit rate
+
+  ⚙️  Context Management: ➡️ 15/30 points
+     Context tracking unavailable
+
+  🎯 Efficiency: ✅ 30/30 points
+     15.3 tools/msg, 4.4K tok/msg
+
+🤖 MODEL MIX
+───────────────────────────────────────────────────────────────
+  Sonnet 4.5
+  █████████░ 92.7% of cost
+  Tokens: 3.5M
+
+  Haiku 4.5
+  ░░░░░░░░░░ 7.3% of cost
+  Tokens: 336.7K
+
+📊 TOKEN DISTRIBUTION
+───────────────────────────────────────────────────────────────
+  Input: 0.1% ░░░░░░░░░░
+  Output: 0.3% ░░░░░░░░░░
+  Cache writes: 9.6% ░░░░░░░░░░
+  Cache reads: 90.0% █████████░
+
+⚡ EFFICIENCY METRICS
+───────────────────────────────────────────────────────────────
+  Tool Intensity: Minimal - early session or simple tasks
+    46 tools (15.3 tools/msg) across 3 msgs
+
+  Response Verbosity: Concise - brief responses
+    4.4K tokens/msg average
+
+  Output/Input Ratio: 3.13x
+
+  Cache Hit Rate: 90.4%
+    Excellent → stay in session
+
+📊 SESSION METRICS
+───────────────────────────────────────────────────────────────
+  Messages: 3 | Tools: 46
+  Cache Efficiency: 90.4%
+  Total Tokens: 3,815,792
+
+  ℹ️  Use /cost for official billing amounts
+
+🎯 TOP OPTIMIZATION ACTIONS
+───────────────────────────────────────────────────────────────
+  ✅ Session looks well-optimized! Keep up the good work.
+
+📊 SESSION INSIGHTS
+───────────────────────────────────────────────────────────────
+  Context Growth: Slow growth → healthy pace
+    4.4K tokens/msg average
+
+  Tool Pattern: Minimal - early session or simple tasks
+    46 tools (15.3 tools/msg)
+
+  Cache Performance: Excellent → stay in session
+    90.4% hit rate
+```
+
+**For Subscription Users** - Value + Optimization:
+- Same dashboard with **💵 Cost Drivers** (dollar amounts)
+- **📈 Trajectory** section with projected costs
+- **Dollar savings** in optimization recommendations
+- API-equivalent estimates with 10% safety margin
+
+## How It Works
+
+### Technical Implementation
+
+**Architecture:** TypeScript executed via `npx tsx` (no compilation needed)
+
+**Claude Code Features Used:**
+
+1. **Status Line Command** (`~/.claude/settings.json`)
+   - Not a hook - direct command execution by Claude Code
+   - Invoked automatically on every interaction
+   - Receives JSON stdin: `{session_id, model, context_window, ...}`
+   - Returns formatted string to status bar
+
+2. **Custom Slash Command** (`~/.claude/commands/trip.md`)
+   - User-invocable skill via `/trip`
+   - Assistant executes command with `--trip-computer` flag
+   - Assistant displays output in code block (instructed by skill docs)
+   - No hooks involved - pure command execution
+
+3. **No Hooks Used** (v0.11.0+)
+   - Old bash version (<0.11.0) used SessionEnd hooks for automatic session-end stats
+   - v0.11.0 removed all hooks - uses only status line command + slash command
+   - Installer automatically removes old SessionEnd hooks from settings.json
+
+**Status Line Flow:**
+```
+User interaction → Claude Code invokes status line command
+→ Script reads stdin (session_id, model, context)
+→ Parses transcript: ~/.claude/projects/<project>/<session>.jsonl
+→ Deduplicates tokens by requestId + model
+→ Aggregates per-model, calculates costs
+→ Returns: "💬 X msgs (Model) | 🔧 X tools | ..."
+```
+
+**Trip Computer Flow:**
+```
+User types /trip → Assistant invokes skill
+→ Skill executes: npx tsx src/index.ts --trip-computer
+→ Same parsing + deduplication + analytics computation
+→ Outputs dashboard to stdout
+→ Assistant copies output to response (per skill instructions)
+```
+
+**Session Caching:**
+- 5-second TTL cache in `~/.claude/session-stats/<session_id>.json`
+- Cache invalidated when transcript mtime changes
+- ~10ms cache hits vs ~200ms misses (90% hit rate typical)
+
+**Transcript Deduplication Algorithm:**
+```typescript
+// Group by requestId + model, take MAX tokens per request
+const dedupKey = `${requestId}|${modelId}`;
+requestUsage.input = Math.max(requestUsage.input, usage.input_tokens);
+// Then aggregate into per-model totals
+```
+
+**Cross-Project Agent Discovery:**
+- Extracts agent IDs from main transcript: `/agent-[a-z0-9]+/g`
+- Searches all `~/.claude/projects/*/agent-*.jsonl` files
+- Includes agent usage in cost calculation (agents are billable)
+
+**Zero Dependencies:** Uses only Node.js stdlib (no `npm install` needed)
 
 ## Features
 
-✅ **Prompt quality analysis** (v0.6.0) - Detects 4 inefficient prompting patterns (vague questions, large pastes, repeated questions, missing constraints) with estimated savings
-✅ **Session health scoring** (NEW v0.5.0) - 0-100 automated assessment with 5-star rating
-✅ **Cost drivers breakdown** (NEW v0.5.0) - Visual analysis of what's driving costs (input/output/cache)
-✅ **Model mix visibility** (NEW v0.5.0) - See which models used and switching suggestions
-✅ **Efficiency metrics** (NEW v0.5.0) - Output/input ratio, cache hit rate, cost per token
-✅ **Prioritized recommendations** (NEW v0.5.0) - Top 3 actions ranked by dollar savings
-✅ **Billing mode detection** - Adapts messaging for API (💳) or Subscription (📅) users
-✅ **Cache efficiency tracking** - Real-time cache performance indicator (⚡ X% eff)
-✅ **Best-effort estimates** - Transcript-based calculations typically within 10% of actual costs
+### ✨ New in v0.13.0 (Multi-Line Status)
+✅ **Multi-line status display** - Session metrics + tool activity + agents + todos
+✅ **Git branch integration** - Shows branch name with dirty indicator (`🌿 main*`)
+✅ **Session duration** - Time since session started (`⏱️ 31m`)
+✅ **Tool activity tracking** - Top 5 tools by frequency with accurate counts
+✅ **Agent status display** - Running and completed agents with duration
+✅ **Todo progress** - Current task and completion status
+✅ **Accurate tool counts** - Aggregates ALL tools (improvement over claude-hud's last 20)
+
+### Session Analytics
+✅ **Session health scoring** - 0-100 automated assessment with 5-star rating
+✅ **Model mix visibility** - See which models used with cost breakdown
+✅ **Cost drivers breakdown** - Visual analysis of input/output/cache patterns
+✅ **Efficiency metrics** - Tool intensity, response verbosity, cache hit rate
+✅ **Prioritized recommendations** - Top 3 actions ranked by impact
+✅ **Billing mode differentiation** - Adapts for API (💳) or Subscription (📅) users
+
+### Technical
+✅ **Best-effort estimates** - Transcript-based calculations typically within 5-15% of `/cost`
 ✅ **Model-aware pricing** - All versions: Opus 3/4/4.5, Sonnet 3.7/4/4.5, Haiku 3/3.5/4.5
 ✅ **Accurate cache pricing** - Model-specific multipliers (including Haiku 3 exception)
-✅ **Agent activity indicator** - Shows when sub-agents are running
-✅ **Session-level tracking** - Know what each coding session costs
+✅ **Token deduplication** - Groups by requestId to avoid inflation
+✅ **Cross-project agent tracking** - Finds agent transcripts across all projects
 ✅ **Real-time updates** - Status line refreshes automatically
 
 ## Why This is Valuable
@@ -96,54 +338,31 @@ Or when agents are working:
 
 **Immediate Decision Making:**
 - "This is getting expensive, let me switch to Haiku"
-- "Cache reads are high, maybe start a fresh session"
-- "This task cost $15 - worth it for the result"
+- "Cache efficiency is great, stay in this session"
+- "This task used 3.8M tokens - worth tracking"
 
 **Cost Awareness:**
-- Track expenses per session
+- Track session efficiency in real-time
 - Understand which workflows are expensive
 - Learn to use appropriate models
 - Improve cost efficiency over time
 
 **Session vs Billing:**
-- `/session-stats` = Speedometer (real-time, per-session)
-- `/cost` = Odometer (final billing)
-- Both are valuable for complete cost awareness
-
-## Installation
-
-**Time required:** ~10 minutes
-
-**Prerequisites:**
-- `jq` (JSON processor)
-- `bc` (calculator, usually pre-installed)
-- `bash` (usually pre-installed)
-
-See platform-specific guides for detailed instructions.
+- Trip Computer = Real-time session insights
+- `/cost` = Final billing verification
+- Both are valuable for complete awareness
 
 ## How It Works
 
-**Billing Configuration:** User selects API or Subscription during installation, stored in `~/.claude/hooks/.stats-config`
-**Model Detection:** Reads model name from transcript, detects specific versions (e.g., opus-4-5, haiku-3)
-**Token Deduplication:** Groups by `requestId`, takes MAX per request to avoid inflation
-**Agent Detection:** Checks for recently modified agent files (<10 seconds)
+**Model Detection:** Reads model name from Claude Code stdin (real-time) or transcript fallback
+**Token Deduplication:** Groups by `requestId` + `model`, takes MAX per request to avoid inflation
+**Per-Model Tracking:** Aggregates tokens and calculates costs separately for each model used
+**Agent Detection:** Finds agent transcripts across all project directories for complete session view
+**Context Tracking:** Receives context window data from Claude Code stdin (Node.js/Bun only)
 **Cache Pricing:** Applies model-specific multipliers (standard: 1.25x/0.10x, Haiku 3: 1.20x/0.12x)
+**Billing Configuration:** Reads mode from `~/.claude/hooks/.stats-config` (API vs Subscription)
 
-## Known Limitations
-
-### Session Stats Reset with `/clear` Command
-
-**Current Behavior:** When you use the `/clear` command in Claude Code, it creates a new session with a new transcript file. This means the session stats will reset to zero, showing stats only for the new session.
-
-**Why:** Each session has its own transcript file, and stats are calculated from the current session's transcript. This is by design to keep session tracking simple, predictable, and isolated per session.
-
-**Desired Future Behavior:** Ideally, stats would be cumulative across `/clear` commands within the same Claude Code instance, but reset when Claude Code is closed and restarted.
-
-**Workaround:** Note the costs before using `/clear` if you need to track total spending across multiple cleared sessions within the same work period.
-
-**Status:** Documented as a known limitation. See "Future Enhancements" section for planned improvements.
-
-## Pricing Reference (2025)
+## Pricing Reference (2026)
 
 | Model | Input | Output | Cache Write (5m) | Cache Read |
 |-------|-------|--------|------------------|------------|
@@ -158,42 +377,65 @@ See platform-specific guides for detailed instructions.
 
 **Subscriptions:** Pro ($20/mo), Max 5x ($100/mo), Max 20x ($200/mo)
 
+## Known Limitations
+
+### Context Tracking
+**Limitation:** Context tracking is only available when running as a status line command. Direct execution via bash doesn't receive stdin from Claude Code.
+
+**Why:** Claude Code only provides stdin data (context_window, model) to processes invoked as status line commands.
+
+**Workaround:** Use `/context` command for accurate context information.
+
+### Stats Reset with `/clear` Command
+
+**Current Behavior:** When you use `/clear`, stats reset to zero (new session, new transcript).
+
+**Why:** Each session has its own transcript file for isolation and simplicity.
+
+**Desired Future:** Cumulative stats across `/clear` within same Claude Code instance.
+
+**Workaround:** Note costs before `/clear` if tracking total spending across resets.
+
 ## Disclaimer
 
-These are session-level estimates from transcript data, typically accurate within 10% of the `/cost` command. Differences occur due to background operations, timing variations, and API measurement methods. For official billing amounts, use the `/cost` command. For subscription users, these show API-equivalent costs - your actual usage is included in your plan.
+These are session-level estimates from transcript data, typically accurate within 5-15% of the `/cost` command. Differences occur due to:
+- Web search costs (may not appear in transcript usage)
+- Background operations
+- Timing variations (transcript lag)
+- API measurement methods
 
-## Technical Details
+**For official billing amounts, always use the `/cost` command.** For subscription users, these show API-equivalent costs - your actual usage is included in your plan.
 
-- **Deduplication:** Groups by `requestId` to avoid counting duplicates (3-4x inflation without this)
-- **Cross-platform:** Works on Linux, macOS, Windows (WSL/Git Bash)
-- **Agent detection:** Shows indicator when sub-agents active (files modified <10 seconds)
-- **Model-aware:** Automatically detects and applies correct pricing rates
-- **Session-scoped:** Tracks THIS session only, not total billing
+## Technical Architecture
+
+**Language:** TypeScript with ES2022 modules
+**Runtime:** Node.js 18+ (via tsx for direct TS execution)
+**Dependencies:** Zero npm packages (stdlib only)
+**Entry Point:** `src/index.ts`
+**Modules:** Transcript parser, analytics computer, renderers, cache manager, usage API client
+**Data Flow:** stdin → transcript parse → analytics compute → cache → render
 
 ## Future Enhancements
 
 Potential improvements for future versions:
 
-- [ ] **Cumulative stats across `/clear` sessions** - Track cumulative costs within the same Claude Code instance even when using `/clear`, but reset when Claude Code is closed and restarted
-  - Possible approaches: PID-based session detection, persistent marker file with inactivity timeout, or user-controlled reset command
-  - Trade-off: Added complexity (50-60 lines) and edge cases vs. convenience
-- [ ] Support for multiple sessions comparison
-- [ ] Cost history tracking over time
-- [ ] Budget alerts/warnings
-- [ ] Export stats to CSV/JSON
-- [ ] Integration with time tracking tools
-- [ ] Team/project-level aggregation
-- [ ] Custom pricing profiles
-- [ ] Model performance metrics
+- [ ] **Rate limit display** - Show OAuth rate limits in status line (library implemented)
+- [ ] **Cumulative stats across `/clear`** - Track within same instance, reset on close
+- [ ] **Cost history tracking** - Session-over-session trends
+- [ ] **Budget alerts** - Configurable spending warnings
+- [ ] **Export stats** - CSV/JSON for analysis
+- [ ] **Time tracking integration** - Link sessions to work periods
+- [ ] **Team analytics** - Aggregate across multiple users
+- [ ] **Custom pricing profiles** - User-defined rates
 
 ## Support
 
-**Installation issues?** Check troubleshooting section in your platform guide
+**Installation issues?** Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
-**Questions?** Review the detailed setup guide for your OS
+**Questions?** Review [CLAUDE.md](CLAUDE.md) for technical details
 
-**Need help?** Verify prerequisites are installed (`jq`, `bc`)
+**Need help?** Verify Node.js 18+ is installed: `node --version`
 
 ---
 
-**Ready to install? Run `./install-claude-stats.sh` or follow your platform guide!**
+**Ready to use?** Add to `~/.claude/settings.json` and restart Claude Code!

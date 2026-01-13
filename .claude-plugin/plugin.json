@@ -1,0 +1,31 @@
+{
+  "name": "claude-trip-computer",
+  "version": "0.11.0",
+  "description": "Real-time session analytics and optimization system for Claude Code with per-model cost tracking, context monitoring, and health scoring. Provides both a compact status line and detailed trip computer dashboard with actionable recommendations.",
+  "author": {
+    "name": "Claude Trip Computer Team",
+    "email": "trip-computer@example.com"
+  },
+  "homepage": "https://github.com/yourusername/claude-trip-computer",
+  "repository": "https://github.com/yourusername/claude-trip-computer",
+  "license": "MIT",
+  "keywords": [
+    "analytics",
+    "statusline",
+    "cost-tracking",
+    "optimization",
+    "monitoring",
+    "session-metrics",
+    "context-tracking",
+    "health-scoring",
+    "cache-efficiency",
+    "per-model-costs"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "requirements": {
+    "runtime": "Node.js 18+ or Bun",
+    "note": "Zero npm dependencies - uses only Node.js stdlib"
+  }
+}
