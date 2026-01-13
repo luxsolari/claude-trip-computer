@@ -120,11 +120,6 @@ The installer will:
 - In progress: `▸ Task name (2/5)`
 - Complete: `✓ All todos complete (5/5)`
 
-**Or when analyzing:**
-```
-🤖 Sub-agents running, stand by...
-```
-
 ### Trip Computer
 
 Ask Claude to show trip computer stats, or run directly:
