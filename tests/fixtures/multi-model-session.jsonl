@@ -1,0 +1,6 @@
+{"type":"user","requestId":"req-001","message":{"content":"Write a complex feature"}}
+{"type":"assistant","requestId":"req-001","message":{"model":"claude-sonnet-4-5-20250929","usage":{"input_tokens":2000,"output_tokens":1500,"cache_creation_input_tokens":500,"cache_read_input_tokens":0},"content":[{"type":"text","text":"I'll implement this feature."},{"type":"tool_use","id":"tool1","name":"Write","input":{"file_path":"/feature.ts"}}]}}
+{"type":"user","requestId":"req-001","message":{"content":[{"type":"tool_result","tool_use_id":"tool1","content":"Success"}]}}
+{"type":"assistant","requestId":"req-002","message":{"model":"claude-opus-4-5-20250514","usage":{"input_tokens":3000,"output_tokens":2000,"cache_creation_input_tokens":800,"cache_read_input_tokens":1000},"content":[{"type":"text","text":"Now with Opus for complex reasoning."}]}}
+{"type":"user","requestId":"req-003","message":{"content":"Add tests"}}
+{"type":"assistant","requestId":"req-003","message":{"model":"claude-haiku-4-5-20241128","usage":{"input_tokens":1000,"output_tokens":800,"cache_creation_input_tokens":200,"cache_read_input_tokens":600},"content":[{"type":"text","text":"Using Haiku for quick test generation."},{"type":"tool_use","id":"tool2","name":"Write","input":{"file_path":"/test.ts"}}]}}

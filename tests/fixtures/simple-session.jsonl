@@ -1,0 +1,6 @@
+{"type":"user","requestId":"req-001","message":{"content":"Hello, can you help me write a function?"}}
+{"type":"assistant","requestId":"req-001","message":{"model":"claude-sonnet-4-5-20250929","usage":{"input_tokens":1000,"output_tokens":500,"cache_creation_input_tokens":200,"cache_read_input_tokens":0},"content":[{"type":"text","text":"I'll help you write a function."}]}}
+{"type":"user","requestId":"req-002","message":{"content":"Can you add error handling?"}}
+{"type":"assistant","requestId":"req-002","message":{"model":"claude-sonnet-4-5-20250929","usage":{"input_tokens":800,"output_tokens":600,"cache_creation_input_tokens":100,"cache_read_input_tokens":500},"content":[{"type":"text","text":"Sure, I'll add error handling."},{"type":"tool_use","id":"tool1","name":"Edit","input":{"file_path":"/test.ts"}}]}}
+{"type":"user","requestId":"req-002","message":{"content":[{"type":"tool_result","tool_use_id":"tool1","content":"Success"}]}}
+{"type":"assistant","requestId":"req-003","message":{"model":"claude-sonnet-4-5-20250929","usage":{"input_tokens":700,"output_tokens":400,"cache_creation_input_tokens":0,"cache_read_input_tokens":800},"content":[{"type":"text","text":"Error handling added successfully."}]}}

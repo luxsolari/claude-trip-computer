@@ -1,0 +1,4 @@
+{"type":"user","requestId":"req-001","message":{"content":"Test deduplication"}}
+{"type":"assistant","requestId":"req-001","message":{"model":"claude-sonnet-4-5-20250929","usage":{"input_tokens":1000,"output_tokens":500,"cache_creation_input_tokens":100,"cache_read_input_tokens":0},"content":[{"type":"text","text":"Response 1"}]}}
+{"type":"assistant","requestId":"req-001","message":{"model":"claude-sonnet-4-5-20250929","usage":{"input_tokens":1000,"output_tokens":500,"cache_creation_input_tokens":100,"cache_read_input_tokens":0},"content":[{"type":"text","text":"Duplicate entry (same tokens)"}]}}
+{"type":"assistant","requestId":"req-001","message":{"model":"claude-sonnet-4-5-20250929","usage":{"input_tokens":1200,"output_tokens":600,"cache_creation_input_tokens":150,"cache_read_input_tokens":50},"content":[{"type":"text","text":"Another duplicate (higher tokens - should use these)"}]}}
