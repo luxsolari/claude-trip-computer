@@ -1,0 +1,79 @@
+graph TB
+    subgraph Input["🎬 INPUT: Claude Code Session"]
+        Transcript["Transcript<br/>Session Data"]
+        Status["Session Status<br/>Model, Messages, Tokens"]
+    end
+
+    subgraph Detection["🔍 AUTO-DETECTION LAYER"]
+        BillingDetect["Billing Mode<br/>Detector<br/>(API vs Sub)"]
+        TierDetect["Subscription Tier<br/>Detector<br/>(Pro/Max5/Max20)"]
+        WindowDetect["/clear Cycle<br/>Detector"]
+    end
+
+    subgraph Storage["💾 PERSISTENT STORAGE"]
+        Sessions["sessions.jsonl<br/>(All sessions)"]
+        Index["session-index.json<br/>(Fast lookup)"]
+        Config[".stats-config<br/>(Billing + Prefs)"]
+    end
+
+    subgraph Metrics["📊 METRIC CALCULATION"]
+        TokenMath["Token Counting<br/>& Dedup"]
+        QuotaMath["Quota Math<br/>(5h + 7d)"]
+        BurnRate["Burn Rate<br/>Calculations"]
+        Health["Health Scoring<br/>& Efficiency"]
+    end
+
+    subgraph StatusLine["📈 STATUS LINE GENERATOR"]
+        Template["Template<br/>Selection"]
+        Format["Dynamic<br/>Formatting"]
+        Render["Real-time<br/>Rendering"]
+    end
+
+    subgraph Intelligence["🧠 INTELLIGENCE LAYER"]
+        PatternDetect["Pattern Detection<br/>(Claude API)"]
+        Insights["Insight Generation<br/>(Claude API)"]
+        Predict["Predictive Analysis<br/>(Claude API)"]
+    end
+
+    subgraph Dashboard["📱 TRIP COMPUTER DASHBOARD"]
+        DashQuick["Quick Summary<br/>Widget"]
+        DashQuota["Quota Windows<br/>Widget"]
+        DashModel["Model Mix<br/>Widget"]
+        DashRecs["Smart Recs<br/>Widget"]
+        DashPatterns["Patterns & Learning<br/>Widget"]
+    end
+
+    subgraph Export["📤 EXPORT & SHARING"]
+        ExportJSON["Export JSON"]
+        ExportCSV["Export CSV"]
+        ExportMD["Export Markdown"]
+        Share["Share Link<br/>Generator"]
+    end
+
+    Input --> Detection
+    Detection --> Storage
+
+    Input --> Metrics
+    Storage --> Metrics
+
+    Metrics --> StatusLine
+    Metrics --> Dashboard
+    Storage --> Dashboard
+
+    Storage --> Intelligence
+    Metrics --> Intelligence
+    Intelligence --> Dashboard
+
+    Dashboard --> Export
+
+    Render -.->|Live Updates| StatusLine
+    Config -.->|User Preferences| Template
+
+    style Input fill:#bbdefb,stroke:#1565c0,stroke-width:2px
+    style Detection fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px
+    style Storage fill:#ffe0b2,stroke:#e65100,stroke-width:2px
+    style Metrics fill:#f8bbd0,stroke:#880e4f,stroke-width:2px
+    style StatusLine fill:#d1c4e9,stroke:#3f51b5,stroke-width:2px
+    style Intelligence fill:#c5e1a5,stroke:#558b2f,stroke-width:2px
+    style Dashboard fill:#b2dfdb,stroke:#004d40,stroke-width:2px
+    style Export fill:#ffccbc,stroke:#bf360c,stroke-width:2px

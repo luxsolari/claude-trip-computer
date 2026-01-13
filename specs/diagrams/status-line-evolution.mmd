@@ -1,0 +1,27 @@
+graph TB
+    subgraph Phase1["Phase 1: Foundation"]
+        SL1["💬 47 msgs | 🔧 12 tools<br/>💳 ~$2.35 | ⚡ 78% eff | 📊 /trip<br/><br/>(Basic metrics, no billing context)"]
+    end
+
+    subgraph Phase2["Phase 2: Subscription Excellence"]
+        SL2["📅 Pro: 89K/220K (40%)<br/>⚡ 2.1K tokens/msg | 🕐 1h 15m until reset<br/>📊 /trip<br/><br/>(Quota-focused, burn rate visible)"]
+    end
+
+    subgraph Phase3["Phase 3: Claude Analyzing Claude"]
+        SL3["📅 Pro: 89K (40%) | ↑+8 vs baseline<br/>⚡ 78/100 | 💾 42% cache | 📊 /trip<br/><br/>(Personalized, trended, analyzed)"]
+    end
+
+    subgraph Phase4["Phase 4: Customizable"]
+        SL4A["📅 Pro: 89K/220K (40%) | 🕐 1h 15m | 📊 /trip<br/>(Subscription mode - custom choice)"]
+        SL4B["💬 47 | 💳 $2.35 | ⚡ 42% cache | 📊 /trip<br/>(API mode - custom choice)"]
+        SL4C["⭐ 78/100 | 📈 +8 vs baseline | 💾 42% | 📊 /trip<br/>(Performance mode - custom choice)"]
+    end
+
+    Phase1 --> Phase2
+    Phase2 --> Phase3
+    Phase3 --> Phase4
+
+    style Phase1 fill:#e1f5ff,stroke:#01579b
+    style Phase2 fill:#f3e5f5,stroke:#4a148c
+    style Phase3 fill:#e8f5e9,stroke:#1b5e20
+    style Phase4 fill:#fff3e0,stroke:#e65100

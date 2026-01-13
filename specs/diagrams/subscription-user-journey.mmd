@@ -1,0 +1,54 @@
+graph TB
+    Start["User Starts Claude Code<br/>Session"]
+
+    Install["First Time:<br/>Auto-detect Billing"]
+
+    Session["Session Running"]
+
+    StatusLine["Status Line Shows<br/>📅 Pro: 40% quota<br/>🕐 1h 15m until reset"]
+
+    Mid["Mid-Session:<br/>Hit /trip-computer"]
+
+    Dashboard["See Dashboard<br/>- Quota windows<br/>- Recommendations<br/>- Patterns"]
+
+    Decision{"Continue or<br/>/clear?"}
+
+    Switch["Switch Model<br/>or Trim Context<br/>per recommendation"]
+
+    Continue["Complete Session"]
+
+    End["Session Ends"]
+
+    Meta["Save Metadata<br/>- Name<br/>- Tags<br/>- Notes"]
+
+    Store["Stored in History<br/>for learning"]
+
+    Next["Next Session:<br/>Claude analyzes<br/>your patterns"]
+
+    Start --> Install
+    Install --> Session
+    Session --> StatusLine
+    StatusLine --> Mid
+    Mid --> Dashboard
+    Dashboard --> Decision
+    Decision -->|Follow Recs| Switch
+    Switch --> Continue
+    Decision -->|Continue| Continue
+    Continue --> End
+    End --> Meta
+    Meta --> Store
+    Store --> Next
+
+    style Start fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px
+    style Install fill:#ffccbc,stroke:#bf360c,stroke-width:2px
+    style Session fill:#bbdefb,stroke:#1565c0,stroke-width:2px
+    style StatusLine fill:#f8bbd0,stroke:#880e4f,stroke-width:2px
+    style Mid fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    style Dashboard fill:#b2dfdb,stroke:#00695c,stroke-width:2px
+    style Decision fill:#d1c4e9,stroke:#512da8,stroke-width:2px
+    style Switch fill:#ffccbc,stroke:#bf360c,stroke-width:2px
+    style Continue fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px
+    style End fill:#b2dfdb,stroke:#00695c,stroke-width:2px
+    style Meta fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    style Store fill:#f8bbd0,stroke:#880e4f,stroke-width:2px
+    style Next fill:#c5e1a5,stroke:#558b2f,stroke-width:2px

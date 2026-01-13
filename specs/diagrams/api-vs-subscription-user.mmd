@@ -1,0 +1,31 @@
+graph TB
+    subgraph APIUser["💳 API USER (Cost-Conscious)"]
+        API_Interest["Main Interest:<br/>Cost tracking &<br/>optimization"]
+        API_Phase1["Phase 1:<br/>✓ Costs tracked<br/>✓ History available<br/>✓ Persistent"]
+        API_Phase2["Phase 2:<br/>✓ Cost burn rate<br/>✓ Smart model<br/>recommendations<br/>✓ Dashboard"]
+        API_Phase3["Phase 3:<br/>✓ Patterns learned<br/>✓ Cost efficiency<br/>insights<br/>✓ Predictive costs"]
+        API_Phase4["Phase 4:<br/>✓ Choose cost view<br/>✓ Export costs<br/>✓ ROI tracking<br/>✓ Cost sharing"]
+    end
+
+    subgraph SubUser["📅 SUBSCRIPTION USER (Quota-Aware)"]
+        Sub_Interest["Main Interest:<br/>Quota management &<br/>productivity"]
+        Sub_Phase1["Phase 1:<br/>✓ Quota tracked<br/>✓ History available<br/>✓ /clear handling"]
+        Sub_Phase2["Phase 2:<br/>✓ Quota burn rate<br/>✓ Smart model<br/>recommendations<br/>✓ 5h + 7d windows"]
+        Sub_Phase3["Phase 3:<br/>✓ Patterns learned<br/>✓ Efficiency<br/>insights<br/>✓ Quota predictions"]
+        Sub_Phase4["Phase 4:<br/>✓ Choose quota view<br/>✓ Export usage<br/>✓ Achievement sys<br/>✓ Usage sharing"]
+    end
+
+    APIUser --> API_Phase1
+    API_Phase1 --> API_Phase2
+    API_Phase2 --> API_Phase3
+    API_Phase3 --> API_Phase4
+
+    SubUser --> Sub_Phase1
+    Sub_Phase1 --> Sub_Phase2
+    Sub_Phase2 --> Sub_Phase3
+    Sub_Phase3 --> Sub_Phase4
+
+    style APIUser fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style SubUser fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style API_Interest fill:#fff9c4,stroke:#f57f17,stroke-width:1px
+    style Sub_Interest fill:#f8bbd0,stroke:#c2185b,stroke-width:1px
