@@ -203,7 +203,6 @@ async function main() {
       // Brief status line with git, activity
       const statusRenderer = new StatusLineRenderer(billingConfig);
       const output = statusRenderer.render(metrics, modelName, context, rateLimits, gitStatus, activity);
-      console.log(output);
     }
   } catch (error) {
     console.error('[claude-trip-computer] Error:', error instanceof Error ? error.message : 'Unknown error');
