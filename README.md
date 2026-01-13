@@ -1,8 +1,10 @@
 # Claude Trip Computer
 
-**Version 0.13.2** | [Changelog](CHANGELOG.md)
+**Version 0.13.2** | [Changelog](CHANGELOG.md) 
 
 Real-time session analytics and optimization insights for Claude Code. TypeScript-powered with multi-line status display, git integration, tool activity tracking, and efficiency metrics.
+
+![License](https://img.shields.io/github/license/luxsolari/claude-trip-computer)
 
 ## Quick Setup
 
