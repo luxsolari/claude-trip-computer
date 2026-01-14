@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Claude Trip Computer - Session Analytics for Claude Code
- * Version: 0.13.4
+ * Version: 0.13.3
  */
 
 import { readStdin, getContextWindow, getModelName, getSessionId, getTranscriptPath } from './stdin.js';
@@ -22,23 +22,7 @@ import type { SessionMetrics, ContextWindow, SessionAnalytics, GitStatus, Activi
 async function findCurrentSession(): Promise<{ sessionId: string; transcriptPath: string } | null> {
   // Find current working directory's project
   const cwd = process.cwd();
-
-  // Normalize path for Windows compatibility
-  // Handles both Git Bash (/c/Dev/...) and Windows (C:\Dev\...) formats
-  let normalizedPath = cwd;
-
-  // Convert Git Bash format (/c/Dev/...) to Windows format (C:/Dev/...)
-  if (normalizedPath.match(/^\/[a-z]\//)) {
-    const drive = normalizedPath.charAt(1).toUpperCase();
-    normalizedPath = drive + ':' + normalizedPath.slice(2);
-  }
-
-  // Replace backslashes with forward slashes for consistent handling
-  normalizedPath = normalizedPath.replace(/\\/g, '/');
-
-  // Convert to project directory name format: C:/Dev/project -> C--Dev-project
-  // Replace colons and slashes with dashes, replace underscores with dashes
-  const projectDir = normalizedPath.replace(/:/g, '-').replace(/\//g, '-').replace(/_/g, '-');
+  const projectDir = cwd.replace(/\//g, '-').replace(/_/g, '-');
   const transcriptDir = join(homedir(), '.claude', 'projects', projectDir);
 
   if (!existsSync(transcriptDir)) {
@@ -203,6 +187,7 @@ async function main() {
       // Brief status line with git, activity
       const statusRenderer = new StatusLineRenderer(billingConfig);
       const output = statusRenderer.render(metrics, modelName, context, rateLimits, gitStatus, activity);
+      console.log(output);
     }
   } catch (error) {
     console.error('[claude-trip-computer] Error:', error instanceof Error ? error.message : 'Unknown error');

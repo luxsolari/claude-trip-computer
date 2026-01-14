@@ -88,15 +88,22 @@ SAFETY_MARGIN="1.00"  # 1.10 for subscription
 
 ## Usage Instructions for Assistant
 
+**Skill Configuration:**
+
+The trip computer is available as a Skill at `~/.claude/skills/trip/SKILL.md`. It can be invoked by:
+- User typing `/trip` explicitly
+- User asking for session analytics, cost breakdown, or performance insights
+- Automatic discovery when session analysis is relevant
+
 **Critical Behavioral Requirement:**
 
-When the `/trip` skill is invoked by the user:
-1. Execute: `npx tsx /path/to/claude-trip-computer/src/index.ts --trip-computer` using Bash tool
+When the `/trip` Skill is invoked:
+1. Execute: `npx -y tsx /Users/llaje/Code/claude-trip-computer/src/index.ts --trip-computer` using Bash tool
 2. **Immediately copy the COMPLETE output into your text response as a code block**
 3. Display ONLY the raw output - NO additional text, commentary, or analysis before/after
 4. Do NOT leave output in collapsed Bash tool result - user must see it immediately
 
-**Output format:**
+**Required Output Format:**
 ```
 [Complete trip computer dashboard output in code block]
 ```
@@ -105,9 +112,10 @@ When the `/trip` skill is invoked by the user:
 - Add summaries or interpretations
 - Leave output collapsed in tool result
 - Add any text before or after the code block
+- Modify or reformat the output
 - The output is self-contained and complete
 
-The trip computer output already includes all necessary context, health assessment, recommendations, and insights.
+The trip computer output already includes all necessary context, health assessment, recommendations, and insights. The Skill file at `~/.claude/skills/trip/SKILL.md` contains these same instructions to ensure deterministic formatting.
 
 ## Key Technical Concepts
 

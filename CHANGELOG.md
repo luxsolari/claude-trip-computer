@@ -7,18 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.13.4] - 2026-01-12
-
-### Fixed - Windows Path Compatibility
-- **Path normalization for Windows**: Fixed session discovery on Windows systems
-- **Issue**: `findCurrentSession()` only handled forward slashes, causing mismatched project directory names on Windows
-- **Root cause**: Windows paths use backslashes (`C:\Dev\project`) and Git Bash uses Unix-style paths (`/c/Dev/project`)
-- **Solution**: Added proper normalization to handle both formats:
-  - Converts Git Bash format `/c/Dev/...` → `C:/Dev/...`
-  - Replaces backslashes with forward slashes
-  - Replaces colons and slashes with dashes to match Claude's project directory naming (`C--Dev-project`)
-- **Impact**: Status line now works correctly on Windows (previously showed "0 msgs" due to failed session lookup)
-
 ## [0.13.3] - 2026-01-12
 
 ### Fixed - Deterministic Output Across Repos

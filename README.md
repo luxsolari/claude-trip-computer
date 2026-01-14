@@ -1,11 +1,8 @@
 # Claude Trip Computer
-<img width="1582" height="186" alt="image" src="https://github.com/user-attachments/assets/3c31128d-1361-4b37-ac33-d70151f0b332" />
 
-**Version 0.13.2** | [Changelog](CHANGELOG.md) 
+**Version 0.13.2** | [Changelog](CHANGELOG.md)
 
 Real-time session analytics and optimization insights for Claude Code. TypeScript-powered with multi-line status display, git integration, tool activity tracking, and efficiency metrics.
-
-![License](https://img.shields.io/github/license/luxsolari/claude-trip-computer)
 
 ## Quick Setup
 
@@ -13,6 +10,28 @@ Real-time session analytics and optimization insights for Claude Code. TypeScrip
 
 - **Node.js 18+** - Check: `node --version` ([Download](https://nodejs.org/))
 - **Claude Code** - Latest version recommended
+
+### Plugin Marketplace Installation (Coming Soon)
+
+```bash
+# Add marketplace
+/plugin marketplace add yourusername/claude-trip-computer
+
+# Install plugin
+/plugin install claude-trip-computer@yourusername-claude-trip-computer
+
+# Configure statusline in ~/.claude/settings.json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "npx tsx ${CLAUDE_PLUGIN_ROOT}/src/index.ts"
+  }
+}
+
+# Configure billing mode (see Configuration section below)
+```
+
+**Note:** Marketplace distribution is available for easy installation and automatic updates. See `.claude-plugin/` directory for manifest files.
 
 ### Automated Installation (Recommended)
 
@@ -120,6 +139,11 @@ The installer will:
 **Final Line - Todo Progress (NEW, when todos exist):**
 - In progress: `▸ Task name (2/5)`
 - Complete: `✓ All todos complete (5/5)`
+
+**Or when analyzing:**
+```
+🤖 Sub-agents running, stand by...
+```
 
 ### Trip Computer
 

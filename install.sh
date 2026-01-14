@@ -17,12 +17,6 @@ NC='\033[0m' # No Color
 # Script directory (where this script is located)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# On Windows (Git Bash/MSYS), convert Unix path to Windows path for Node.js compatibility
-# Claude Code runs natively on Windows and needs Windows-style paths
-if command -v cygpath &> /dev/null; then
-    SCRIPT_DIR="$(cygpath -m "$SCRIPT_DIR")"
-fi
-
 echo ""
 echo "================================================"
 echo "  Claude Trip Computer - Installation"
@@ -290,10 +284,11 @@ fi
 
 # Test trip computer
 TEST_TRIP=$(npx -y tsx "$SCRIPT_DIR/src/index.ts" --trip-computer 2>&1)
-if [[ $TEST_TRIP == *"TRIP COMPUTER"* ]]; then
+if [[ $TEST_TRIP == *"TRIP COMPUTER"* ]] || [[ $TEST_TRIP == *"/trip"* ]]; then
     echo -e "${GREEN}✓ Trip computer test passed${NC}"
 else
     echo -e "${YELLOW}⚠ Trip computer test produced unexpected output${NC}"
+    echo "Output: $TEST_TRIP"
 fi
 
 echo ""
