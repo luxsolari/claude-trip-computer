@@ -1,4 +1,5 @@
 # Claude Trip Computer
+<img width="1582" height="186" alt="image" src="https://github.com/user-attachments/assets/3c31128d-1361-4b37-ac33-d70151f0b332" />
 
 **Version 0.13.2** | [Changelog](CHANGELOG.md) 
 
