@@ -92,17 +92,13 @@ if [ "$VERIFY_ONLY" = true ]; then
 
     # Check trip.md exists and has correct path
     if [ -f "$TRIP_COMMAND_FILE" ]; then
-        if grep -q "SCRIPT_PATH_PLACEHOLDER" "$TRIP_COMMAND_FILE" 2>/dev/null; then
-            echo -e "${RED}✗ trip.md contains unresolved placeholder${NC}"
-            echo "  Fix: sed -i '' \"s|SCRIPT_PATH_PLACEHOLDER|$SCRIPT_DIR|g\" $TRIP_COMMAND_FILE"
-            VALIDATION_PASSED=false
-        elif grep -q "$SCRIPT_DIR" "$TRIP_COMMAND_FILE" 2>/dev/null; then
+        if grep -q "$SCRIPT_DIR" "$TRIP_COMMAND_FILE" 2>/dev/null; then
             echo -e "${GREEN}✓ trip.md configured correctly${NC}"
             echo "  Path: $SCRIPT_DIR"
         else
             echo -e "${YELLOW}⚠ trip.md exists but path doesn't match current directory${NC}"
             echo "  Expected: $SCRIPT_DIR"
-            CURRENT_PATH=$(grep -o 'npx -y tsx [^"]*' "$TRIP_COMMAND_FILE" 2>/dev/null | head -1)
+            CURRENT_PATH=$(grep -o 'npx -y tsx [^`]*' "$TRIP_COMMAND_FILE" 2>/dev/null | head -1)
             echo "  Found: $CURRENT_PATH"
         fi
     else
@@ -304,51 +300,22 @@ EOF
 
 echo -e "${GREEN}✓ Created billing config: ~/.claude/hooks/.stats-config${NC}"
 
-# Create trip command
+# Create trip slash command (proper Claude Code format)
 TRIP_COMMAND_FILE=~/.claude/commands/trip.md
-cat > "$TRIP_COMMAND_FILE" << 'EOF'
+cat > "$TRIP_COMMAND_FILE" << EOF
 ---
-description: Advanced analytics dashboard with cost tracking and optimization recommendations
-command: npx -y tsx SCRIPT_PATH_PLACEHOLDER/src/index.ts --trip-computer
+description: Display session analytics dashboard with cost tracking and optimization recommendations
+allowed-tools: Bash
 ---
 
-# Trip Computer - Advanced Analytics Dashboard
+Run this exact command and display the complete output:
 
-**CRITICAL INSTRUCTIONS FOR ASSISTANT:**
+\`\`\`bash
+npx -y tsx $SCRIPT_DIR/src/index.ts --trip-computer
+\`\`\`
 
-When this skill is invoked, you MUST:
-1. Execute the command using Bash tool
-2. Immediately output the COMPLETE command result in your text response as a code block
-3. Display ONLY the raw output - NO additional text, commentary, or analysis
-4. The output is self-contained and needs no explanation
-
-**DO NOT:**
-- Leave the output in the collapsed Bash tool result
-- Add any text before or after the output
-- Provide summaries or interpretations
-- The user should see the full dashboard immediately without expanding anything
-
-**Correct format:**
-```
-[Full trip computer output here in code block]
-```
-
-## Output Sections
-
-The trip computer displays:
-- **📊 Quick Summary**: Health status, message/tool/token counts
-- **📈 Session Health**: 5-star rating with component breakdown (0-100 score)
-- **🤖 Model Mix**: Per-model usage with cost percentages
-- **📊 Token Distribution** (API) or **💵 Cost Drivers** (Subscription): Breakdown of token usage
-- **⚡ Efficiency Metrics**: Tool intensity, response verbosity, cache performance
-- **📊 Session Metrics/Usage**: Complete session overview
-- **🎯 Top Optimization Actions**: Prioritized recommendations (max 3)
-- **📊 Session Insights** (API) or **📈 Trajectory** (Subscription): Context/tool/cache patterns or cost projections
+Display the full output in a code block. Do not summarize or interpret - just show the raw output.
 EOF
-
-# Replace placeholder with actual path
-sed -i.bak "s|SCRIPT_PATH_PLACEHOLDER|$SCRIPT_DIR|g" "$TRIP_COMMAND_FILE"
-rm -f "${TRIP_COMMAND_FILE}.bak"
 
 echo -e "${GREEN}✓ Created /trip command: ~/.claude/commands/trip.md${NC}"
 echo ""
@@ -430,14 +397,13 @@ fi
 echo ""
 echo -e "${BLUE}Validating installation...${NC}"
 
-# Validate trip.md - check placeholder was replaced
+# Validate trip.md - check path is correct
 VALIDATION_PASSED=true
-if grep -q "SCRIPT_PATH_PLACEHOLDER" "$TRIP_COMMAND_FILE" 2>/dev/null; then
-    echo -e "${RED}✗ trip.md still contains placeholder - path substitution failed${NC}"
-    echo "  Fix: sed -i '' \"s|SCRIPT_PATH_PLACEHOLDER|$SCRIPT_DIR|g\" $TRIP_COMMAND_FILE"
-    VALIDATION_PASSED=false
-else
+if grep -q "$SCRIPT_DIR" "$TRIP_COMMAND_FILE" 2>/dev/null; then
     echo -e "${GREEN}✓ trip.md path configured correctly${NC}"
+else
+    echo -e "${RED}✗ trip.md path configuration failed${NC}"
+    VALIDATION_PASSED=false
 fi
 
 # Validate settings.json - check statusLine exists

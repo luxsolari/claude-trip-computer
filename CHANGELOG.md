@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.6] - 2026-01-16
+
+### Fixed - /trip Command Structure
+- **Critical bug**: `/trip` slash command was using invalid frontmatter causing LLM hallucination
+- **Root cause**: Used non-existent `command:` frontmatter field - this field only exists in hooks, not slash commands
+- **Symptoms**: In repos other than claude-trip-computer, the LLM would generate fake dashboard output instead of executing the actual script
+- **Fix**: Restructured trip.md to use valid Claude Code slash command format:
+  - Removed invalid `command:` field
+  - Added `allowed-tools: Bash` (valid field)
+  - Simplified body to explicit bash command instruction
+  - Removed "Output Sections" description that LLM was using as hallucination template
+- **Also removed**: Old `session-stats.md` command that referenced deleted bash scripts
+
 ## [0.13.5] - 2026-01-16
 
 ### Fixed - Status Line Not Displaying
