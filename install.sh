@@ -14,6 +14,17 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Parse command line arguments
+VERIFY_ONLY=false
+for arg in "$@"; do
+    case $arg in
+        --verify)
+            VERIFY_ONLY=true
+            shift
+            ;;
+    esac
+done
+
 # Script directory (where this script is located)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -64,6 +75,107 @@ fi
 
 echo -e "${GREEN}✓ Project files found${NC}"
 echo ""
+
+# Verify-only mode: skip installation, just validate existing setup
+if [ "$VERIFY_ONLY" = true ]; then
+    echo "================================================"
+    echo "  Verification Mode"
+    echo "================================================"
+    echo ""
+
+    SETTINGS_FILE=~/.claude/settings.json
+    TRIP_COMMAND_FILE=~/.claude/commands/trip.md
+    VALIDATION_PASSED=true
+
+    echo -e "${BLUE}Checking configuration files...${NC}"
+    echo ""
+
+    # Check trip.md exists and has correct path
+    if [ -f "$TRIP_COMMAND_FILE" ]; then
+        if grep -q "SCRIPT_PATH_PLACEHOLDER" "$TRIP_COMMAND_FILE" 2>/dev/null; then
+            echo -e "${RED}✗ trip.md contains unresolved placeholder${NC}"
+            echo "  Fix: sed -i '' \"s|SCRIPT_PATH_PLACEHOLDER|$SCRIPT_DIR|g\" $TRIP_COMMAND_FILE"
+            VALIDATION_PASSED=false
+        elif grep -q "$SCRIPT_DIR" "$TRIP_COMMAND_FILE" 2>/dev/null; then
+            echo -e "${GREEN}✓ trip.md configured correctly${NC}"
+            echo "  Path: $SCRIPT_DIR"
+        else
+            echo -e "${YELLOW}⚠ trip.md exists but path doesn't match current directory${NC}"
+            echo "  Expected: $SCRIPT_DIR"
+            CURRENT_PATH=$(grep -o 'npx -y tsx [^"]*' "$TRIP_COMMAND_FILE" 2>/dev/null | head -1)
+            echo "  Found: $CURRENT_PATH"
+        fi
+    else
+        echo -e "${RED}✗ trip.md not found at $TRIP_COMMAND_FILE${NC}"
+        echo "  Run: ./install.sh to create it"
+        VALIDATION_PASSED=false
+    fi
+
+    # Check settings.json
+    if [ -f "$SETTINGS_FILE" ]; then
+        if grep -q '"statusLine"' "$SETTINGS_FILE" 2>/dev/null; then
+            if grep -q "$SCRIPT_DIR" "$SETTINGS_FILE" 2>/dev/null; then
+                echo -e "${GREEN}✓ settings.json statusLine configured correctly${NC}"
+            else
+                echo -e "${YELLOW}⚠ settings.json statusLine exists but path may differ${NC}"
+                echo "  Expected path: $SCRIPT_DIR"
+            fi
+        else
+            echo -e "${RED}✗ settings.json missing statusLine configuration${NC}"
+            VALIDATION_PASSED=false
+        fi
+    else
+        echo -e "${RED}✗ settings.json not found at $SETTINGS_FILE${NC}"
+        VALIDATION_PASSED=false
+    fi
+
+    # Check billing config
+    CONFIG_FILE=~/.claude/hooks/.stats-config
+    if [ -f "$CONFIG_FILE" ]; then
+        echo -e "${GREEN}✓ Billing config exists${NC}"
+        BILLING_MODE=$(grep 'BILLING_MODE' "$CONFIG_FILE" 2>/dev/null | cut -d'"' -f2)
+        echo "  Mode: $BILLING_MODE"
+    else
+        echo -e "${YELLOW}⚠ Billing config not found (will use defaults)${NC}"
+    fi
+
+    echo ""
+
+    # Test execution
+    echo -e "${BLUE}Testing execution...${NC}"
+    echo ""
+
+    TEST_OUTPUT=$(npx -y tsx "$SCRIPT_DIR/src/index.ts" 2>&1)
+    # Note: Empty output or "0 msgs" is valid when running outside Claude Code (no stdin)
+    if [[ $TEST_OUTPUT == *"msgs"* ]] || [[ -z "$TEST_OUTPUT" ]]; then
+        echo -e "${GREEN}✓ Status line command works${NC}"
+        if [[ -z "$TEST_OUTPUT" ]]; then
+            echo "  (Empty output expected - no active Claude Code session)"
+        fi
+    else
+        echo -e "${RED}✗ Status line command failed${NC}"
+        echo "  Output: $TEST_OUTPUT"
+        VALIDATION_PASSED=false
+    fi
+
+    TEST_TRIP=$(npx -y tsx "$SCRIPT_DIR/src/index.ts" --trip-computer 2>&1)
+    if [[ $TEST_TRIP == *"TRIP COMPUTER"* ]]; then
+        echo -e "${GREEN}✓ Trip computer command works${NC}"
+    else
+        echo -e "${RED}✗ Trip computer command failed${NC}"
+        VALIDATION_PASSED=false
+    fi
+
+    echo ""
+    echo "================================================"
+    if [ "$VALIDATION_PASSED" = true ]; then
+        echo -e "${GREEN}All validations passed!${NC}"
+    else
+        echo -e "${RED}Some validations failed. See above for fixes.${NC}"
+    fi
+    echo "================================================"
+    exit 0
+fi
 
 # Clean up old bash-based installation (non-interactive)
 echo -e "${BLUE}Checking for previous installations...${NC}"
@@ -251,7 +363,7 @@ fi
 # Update settings.json
 echo -e "${BLUE}Updating Claude Code settings...${NC}"
 
-# Use jq if available, otherwise manual edit
+# Use jq if available, otherwise use Node.js fallback
 if command -v jq &> /dev/null; then
     # Backup settings
     cp "$SETTINGS_FILE" "${SETTINGS_FILE}.backup"
@@ -261,19 +373,38 @@ if command -v jq &> /dev/null; then
         'del(.hooks.SessionEnd) | .statusLine = {type: "command", command: $cmd}' \
         "$SETTINGS_FILE" > "${SETTINGS_FILE}.tmp" && mv "${SETTINGS_FILE}.tmp" "$SETTINGS_FILE"
 
-    echo -e "${GREEN}✓ Updated settings.json (backup saved)${NC}"
+    echo -e "${GREEN}✓ Updated settings.json using jq (backup saved)${NC}"
 else
-    echo -e "${YELLOW}⚠ jq not found - manual configuration needed${NC}"
-    echo ""
-    echo "Add this to ~/.claude/settings.json:"
-    echo ""
-    echo '{'
-    echo '  "statusLine": {'
-    echo '    "type": "command",'
-    echo "    \"command\": \"npx -y tsx $SCRIPT_DIR/src/index.ts\""
-    echo '  }'
-    echo '}'
-    echo ""
+    # Node.js fallback - works on all platforms without jq
+    echo -e "${YELLOW}⚠ jq not found - using Node.js fallback${NC}"
+    cp "$SETTINGS_FILE" "${SETTINGS_FILE}.backup"
+
+    node -e "
+        const fs = require('fs');
+        const path = '${SETTINGS_FILE}'.replace('~', process.env.HOME);
+        let config = {};
+        try { config = JSON.parse(fs.readFileSync(path, 'utf8')); } catch(e) {}
+        delete config.hooks?.SessionEnd;
+        config.statusLine = { type: 'command', command: 'npx -y tsx $SCRIPT_DIR/src/index.ts' };
+        fs.writeFileSync(path, JSON.stringify(config, null, 2));
+        console.log('Updated settings.json using Node.js');
+    " 2>/dev/null
+
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Updated settings.json using Node.js (backup saved)${NC}"
+    else
+        echo -e "${RED}✗ Failed to update settings.json${NC}"
+        echo ""
+        echo "Please manually add this to ~/.claude/settings.json:"
+        echo ""
+        echo '{'
+        echo '  "statusLine": {'
+        echo '    "type": "command",'
+        echo "    \"command\": \"npx -y tsx $SCRIPT_DIR/src/index.ts\""
+        echo '  }'
+        echo '}'
+        echo ""
+    fi
 fi
 
 echo ""
@@ -294,6 +425,37 @@ if [[ $TEST_TRIP == *"TRIP COMPUTER"* ]]; then
     echo -e "${GREEN}✓ Trip computer test passed${NC}"
 else
     echo -e "${YELLOW}⚠ Trip computer test produced unexpected output${NC}"
+fi
+
+echo ""
+echo -e "${BLUE}Validating installation...${NC}"
+
+# Validate trip.md - check placeholder was replaced
+VALIDATION_PASSED=true
+if grep -q "SCRIPT_PATH_PLACEHOLDER" "$TRIP_COMMAND_FILE" 2>/dev/null; then
+    echo -e "${RED}✗ trip.md still contains placeholder - path substitution failed${NC}"
+    echo "  Fix: sed -i '' \"s|SCRIPT_PATH_PLACEHOLDER|$SCRIPT_DIR|g\" $TRIP_COMMAND_FILE"
+    VALIDATION_PASSED=false
+else
+    echo -e "${GREEN}✓ trip.md path configured correctly${NC}"
+fi
+
+# Validate settings.json - check statusLine exists
+if grep -q '"statusLine"' "$SETTINGS_FILE" 2>/dev/null; then
+    if grep -q "$SCRIPT_DIR" "$SETTINGS_FILE" 2>/dev/null; then
+        echo -e "${GREEN}✓ settings.json statusLine configured correctly${NC}"
+    else
+        echo -e "${YELLOW}⚠ settings.json statusLine exists but path may be incorrect${NC}"
+        echo "  Expected path: $SCRIPT_DIR"
+    fi
+else
+    echo -e "${RED}✗ settings.json missing statusLine configuration${NC}"
+    VALIDATION_PASSED=false
+fi
+
+if [ "$VALIDATION_PASSED" = false ]; then
+    echo ""
+    echo -e "${YELLOW}⚠ Some validations failed. Run './install.sh --verify' after fixing.${NC}"
 fi
 
 echo ""

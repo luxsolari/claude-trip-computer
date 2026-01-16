@@ -403,6 +403,8 @@ Potential improvements for future versions:
 - [ ] **Time tracking integration** - Link sessions to work periods
 - [ ] **Team analytics** - Aggregate across multiple users
 - [ ] **Custom pricing profiles** - User-defined rates
+- [ ] **Global npm package** - `npm install -g` for source-independent installation
+- [ ] **Cross-platform Node.js installer** - `node install.js` for pure Windows without Git Bash
 
 ## Support
 
