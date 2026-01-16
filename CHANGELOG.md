@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.5] - 2026-01-16
+
+### Fixed - Status Line Not Displaying
+- **Critical bug**: Status line was not showing in Claude Code
+- **Root cause**: `StatusLineRenderer.render()` returned a string but `index.ts` never printed it
+- **Fix**: Added missing `console.log(output)` after rendering status line
+- **Impact**: Status line now displays correctly on all platforms
+
 ## [0.13.4] - 2026-01-12
 
 ### Fixed - Windows Path Compatibility
