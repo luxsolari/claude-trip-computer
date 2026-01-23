@@ -1,4 +1,5 @@
 # Claude Trip Computer
+<img width="1582" height="186" alt="image" src="https://github.com/user-attachments/assets/3c31128d-1361-4b37-ac33-d70151f0b332" />
 
 **Version 0.13.2** | [Changelog](CHANGELOG.md) 
 
@@ -119,11 +120,6 @@ The installer will:
 **Final Line - Todo Progress (NEW, when todos exist):**
 - In progress: `▸ Task name (2/5)`
 - Complete: `✓ All todos complete (5/5)`
-
-**Or when analyzing:**
-```
-🤖 Sub-agents running, stand by...
-```
 
 ### Trip Computer
 
