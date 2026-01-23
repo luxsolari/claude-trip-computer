@@ -1,6 +1,6 @@
 /**
  * Configuration file handling
- * Version: 0.13.2
+ * Version: 0.13.6
  */
 
 import { readFileSync, existsSync } from 'fs';

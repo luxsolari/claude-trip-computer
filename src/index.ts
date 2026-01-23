@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Claude Trip Computer - Session Analytics for Claude Code
- * Version: 0.13.4
+ * Version: 0.13.6
  */
 
 import { readStdin, getContextWindow, getModelName, getSessionId, getTranscriptPath } from './stdin.js';
@@ -203,6 +203,7 @@ async function main() {
       // Brief status line with git, activity
       const statusRenderer = new StatusLineRenderer(billingConfig);
       const output = statusRenderer.render(metrics, modelName, context, rateLimits, gitStatus, activity);
+      console.log(output);
     }
   } catch (error) {
     console.error('[claude-trip-computer] Error:', error instanceof Error ? error.message : 'Unknown error');

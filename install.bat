@@ -1,6 +1,6 @@
 @echo off
 REM Claude Trip Computer - Windows Installation Wrapper
-REM Version: 0.13.2
+REM Version: 0.13.6
 REM
 REM This batch file locates Git Bash and runs the installation script
 REM
