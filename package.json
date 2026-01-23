@@ -1,6 +1,6 @@
 {
   "name": "claude-trip-computer",
-  "version": "0.13.2",
+  "version": "0.13.6",
   "description": "Real-time session optimization analytics for Claude Code with context tracking, model display, and rate limit monitoring",
   "type": "module",
   "main": "dist/index.js",
@@ -8,8 +8,14 @@
   "bin": {
     "claude-trip-computer": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "dev": "tsx src/index.ts",
     "watch": "tsc --watch",
     "test": "vitest",
@@ -23,10 +29,19 @@
     "cost-tracking",
     "statusline",
     "context-window",
-    "rate-limits"
+    "rate-limits",
+    "cli"
   ],
   "author": "Claude Trip Computer",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luxsolari/claude-trip-computer.git"
+  },
+  "homepage": "https://github.com/luxsolari/claude-trip-computer#readme",
+  "bugs": {
+    "url": "https://github.com/luxsolari/claude-trip-computer/issues"
+  },
   "engines": {
     "node": ">=18.0.0"
   },

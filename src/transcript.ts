@@ -1,6 +1,6 @@
 /**
  * Transcript parsing
- * Version: 0.13.3
+ * Version: 0.13.6
  */
 
 import { readFileSync, existsSync } from 'fs';

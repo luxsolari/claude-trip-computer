@@ -1,6 +1,6 @@
 /**
  * Session analytics computer - generates intelligence from metrics
- * Version: 0.13.2
+ * Version: 0.13.6
  */
 
 import type { SessionMetrics, ContextWindow, SessionAnalytics, OptimizationAction, BillingConfig } from './types.js';

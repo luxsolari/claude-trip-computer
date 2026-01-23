@@ -1,6 +1,6 @@
 /**
  * Status line renderer
- * Version: 0.13.2
+ * Version: 0.13.6
  * Multi-line status with git, duration, and tool activity
  */
 

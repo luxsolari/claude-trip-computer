@@ -1,7 +1,7 @@
 # Claude Trip Computer
 <img width="1582" height="186" alt="image" src="https://github.com/user-attachments/assets/3c31128d-1361-4b37-ac33-d70151f0b332" />
 
-**Version 0.13.2** | [Changelog](CHANGELOG.md) 
+**Version 0.13.6** | [Changelog](CHANGELOG.md) 
 
 Real-time session analytics and optimization insights for Claude Code. TypeScript-powered with multi-line status display, git integration, tool activity tracking, and efficiency metrics.
 
@@ -403,6 +403,8 @@ Potential improvements for future versions:
 - [ ] **Time tracking integration** - Link sessions to work periods
 - [ ] **Team analytics** - Aggregate across multiple users
 - [ ] **Custom pricing profiles** - User-defined rates
+- [ ] **Global npm package** - `npm install -g` for source-independent installation
+- [ ] **Cross-platform Node.js installer** - `node install.js` for pure Windows without Git Bash
 
 ## Support
 
