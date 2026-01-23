@@ -1,6 +1,6 @@
 /**
  * Stdin reading and parsing (from Claude Code)
- * Version: 0.13.2
+ * Version: 0.13.6
  * Synchronized with claude-hud implementation for accurate context tracking
  */
 

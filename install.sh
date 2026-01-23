@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Claude Trip Computer - Installation Script
-# Version: 0.13.2
+# Version: 0.13.6
 # Platform: Linux, macOS, Windows (Git Bash/WSL)
 #
 

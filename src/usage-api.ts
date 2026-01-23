@@ -1,6 +1,6 @@
 /**
  * Anthropic OAuth Usage API for rate limit tracking
- * Version: 0.13.2
+ * Version: 0.13.6
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';

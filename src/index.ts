@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Claude Trip Computer - Session Analytics for Claude Code
- * Version: 0.13.4
+ * Version: 0.13.6
  */
 
 import { readStdin, getContextWindow, getModelName, getSessionId, getTranscriptPath } from './stdin.js';
