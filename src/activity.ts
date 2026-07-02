@@ -1,6 +1,6 @@
 /**
  * Activity parsing from transcript
- * Version: 0.13.6
+ * Version: 0.13.7
  * Extracts tool usage, agent status, and todo progress from transcript
  */
 

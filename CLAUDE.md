@@ -3,7 +3,7 @@
 ## Project Overview
 
 **Name:** Claude Trip Computer
-**Version:** 0.13.0 (see [CHANGELOG.md](CHANGELOG.md))
+**Version:** 0.13.7 (see [CHANGELOG.md](CHANGELOG.md))
 **Purpose:** Real-time session analytics and optimization system for Claude Code
 **Type:** TypeScript CLI utility
 **Status:** Production-ready - Complete TypeScript rewrite with accurate context tracking and per-model cost breakdown
@@ -39,7 +39,7 @@ claude-trip-computer/
 │       └── config.ts         # Billing config reader
 ├── package.json              # Node.js metadata (zero deps)
 ├── tsconfig.json             # TypeScript config
-├── VERSION                   # 0.13.0
+├── VERSION                   # 0.13.7
 ├── CHANGELOG.md              # Version history
 ├── README.md                 # User documentation
 └── TROUBLESHOOTING.md        # Setup help

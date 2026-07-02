@@ -1,13 +1,14 @@
 {
   "name": "claude-trip-computer",
-  "version": "0.11.0",
+  "version": "0.13.7",
   "description": "Real-time session analytics and optimization system for Claude Code with per-model cost tracking, context monitoring, and health scoring. Provides both a compact status line and detailed trip computer dashboard with actionable recommendations.",
   "author": {
-    "name": "Claude Trip Computer Team",
-    "email": "trip-computer@example.com"
+    "name": "Lux Solari",
+    "email": "luxsolari@outlook.com",
+    "url": "https://github.com/luxsolari"
   },
-  "homepage": "https://github.com/yourusername/claude-trip-computer",
-  "repository": "https://github.com/yourusername/claude-trip-computer",
+  "homepage": "https://github.com/luxsolari/claude-trip-computer",
+  "repository": "https://github.com/luxsolari/claude-trip-computer",
   "license": "MIT",
   "keywords": [
     "analytics",

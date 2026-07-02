@@ -1,8 +1,8 @@
 {
   "name": "claude-trip-computer-marketplace",
   "owner": {
-    "name": "Claude Trip Computer Team",
-    "email": "trip-computer@example.com"
+    "name": "Lux Solari",
+    "email": "luxsolari@outlook.com"
   },
   "metadata": {
     "description": "Session analytics and optimization tools for Claude Code with LLM-powered intelligence"
@@ -12,7 +12,7 @@
       "name": "claude-trip-computer",
       "source": "./",
       "description": "Real-time session analytics and optimization system with health scoring, per-model cost tracking, and actionable recommendations. Features both a compact status line and detailed trip computer dashboard. Unique value: LLM introspecting itself to provide session intelligence.",
-      "version": "0.11.0",
+      "version": "0.13.7",
       "category": "productivity",
       "tags": [
         "analytics",

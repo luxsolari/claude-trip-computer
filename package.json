@@ -1,6 +1,6 @@
 {
   "name": "claude-trip-computer",
-  "version": "0.13.6",
+  "version": "0.13.7",
   "description": "Real-time session optimization analytics for Claude Code with context tracking, model display, and rate limit monitoring",
   "type": "module",
   "main": "dist/index.js",

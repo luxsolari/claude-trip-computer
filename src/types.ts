@@ -1,6 +1,6 @@
 /**
  * Type definitions for Claude Trip Computer
- * Version: 0.13.6
+ * Version: 0.13.7
  */
 
 export interface StdinData {
