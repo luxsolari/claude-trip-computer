@@ -1,7 +1,7 @@
 # Claude Trip Computer
 <img width="1582" height="186" alt="image" src="https://github.com/user-attachments/assets/3c31128d-1361-4b37-ac33-d70151f0b332" />
 
-**Version 0.13.6** | [Changelog](CHANGELOG.md) 
+**Version 0.13.7** | [Changelog](CHANGELOG.md) 
 
 Real-time session analytics and optimization insights for Claude Code. TypeScript-powered with multi-line status display, git integration, tool activity tracking, and efficiency metrics.
 
@@ -48,7 +48,7 @@ The installer will:
 1. **Clone repository:**
    ```bash
    cd ~/Code  # or your preferred location
-   git clone <repository-url> claude-trip-computer
+   git clone https://github.com/luxsolari/claude-trip-computer
    ```
 
 2. **Configure billing mode:**
@@ -84,6 +84,7 @@ The installer will:
 ### Need Help?
 - **Troubleshooting** → [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 - **Technical Docs** → [CLAUDE.md](CLAUDE.md)
+- **Want to contribute?** → [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## What You Get
 
@@ -328,16 +329,6 @@ requestUsage.input = Math.max(requestUsage.input, usage.input_tokens);
 - `/cost` = Final billing verification
 - Both are valuable for complete awareness
 
-## How It Works
-
-**Model Detection:** Reads model name from Claude Code stdin (real-time) or transcript fallback
-**Token Deduplication:** Groups by `requestId` + `model`, takes MAX per request to avoid inflation
-**Per-Model Tracking:** Aggregates tokens and calculates costs separately for each model used
-**Agent Detection:** Finds agent transcripts across all project directories for complete session view
-**Context Tracking:** Receives context window data from Claude Code stdin (Node.js/Bun only)
-**Cache Pricing:** Applies model-specific multipliers (standard: 1.25x/0.10x, Haiku 3: 1.20x/0.12x)
-**Billing Configuration:** Reads mode from `~/.claude/hooks/.stats-config` (API vs Subscription)
-
 ## Pricing Reference (2026)
 
 | Model | Input | Output | Cache Write (5m) | Cache Read |
@@ -411,6 +402,8 @@ Potential improvements for future versions:
 **Installation issues?** Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
 **Questions?** Review [CLAUDE.md](CLAUDE.md) for technical details
+
+**Want to contribute?** See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 **Need help?** Verify Node.js 18+ is installed: `node --version`
 

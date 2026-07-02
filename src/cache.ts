@@ -1,6 +1,6 @@
 /**
  * Session cache manager with atomic writes
- * Version: 0.13.6
+ * Version: 0.13.7
  */
 
 import { readFileSync, writeFileSync, existsSync, statSync, unlinkSync, readdirSync } from 'fs';

@@ -14,7 +14,7 @@ Thank you for your interest in contributing! This project maintains strict conve
 
 1. **Clone repository:**
    ```bash
-   git clone <repository-url> claude-trip-computer
+   git clone https://github.com/luxsolari/claude-trip-computer
    cd claude-trip-computer
    ```
 
@@ -276,4 +276,4 @@ Contributions will be reviewed for:
 
 **Thank you for contributing!** Your improvements help make Claude Trip Computer better for everyone.
 
-**Last Updated:** 2026-01-12 (v0.13.2)
+**Last Updated:** 2026-07-02 (v0.13.7)

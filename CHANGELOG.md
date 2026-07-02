@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.7] - 2026-07-02
+
+### Fixed - Windows Session ID Extraction
+- **Bug**: `extractSessionId()` in `transcript.ts` used `path.split('/').pop()`,
+  which only handles forward-slash paths. On Windows, `join()` produces
+  backslash-separated paths, so this returned the entire transcript path
+  instead of just the filename — `session_id` ended up being the full path
+  rather than e.g. `simple-session`. Two tests were failing because of this
+  (caught while adding CI, which now runs on both Ubuntu and Windows).
+- **Fix**: Replaced the manual split with Node's platform-aware
+  `path.basename()`, which correctly handles the OS-native separator.
+
+### Fixed - Documentation
+- Duplicate `## How It Works` section in README (two H2 headers with
+  different, partially-overlapping content) — removed the redundant shorter
+  one.
+- `<repository-url>` placeholder was never filled in, shipped literally in
+  both README.md and CONTRIBUTING.md's clone instructions.
+- No link to CONTRIBUTING.md anywhere in README — added to both the "Need
+  Help?" and "Support" sections.
+- `.claude-plugin/plugin.json` and `marketplace.json` were stuck at v0.11.0
+  (three releases stale) with unfilled template placeholders — `homepage`/
+  `repository` pointed at `github.com/yourusername/...`, and author was a
+  generic `"Claude Trip Computer Team"` never replaced with the real
+  copyright holder in `LICENSE`. Fixed both; this plugin-distribution path
+  is still manual-only for now (a proper integration is planned separately),
+  so it's intentionally not yet referenced from README as an install option.
+- Version references were out of sync across `CLAUDE.md` (0.13.0),
+  `CONTRIBUTING.md`'s "Last Updated" stamp (v0.13.2), and both install
+  scripts' printed banner (`Version 0.13.2`, while their own header
+  comments already said 0.13.6) — synced everything to 0.13.7.
+
+### Added
+- `.github/workflows/ci.yml` — runs typecheck, the full vitest suite, and
+  the build on both `ubuntu-latest` and `windows-latest` for every push/PR.
+  Only CodeQL security scanning existed before; the actual test suite never
+  ran automatically. The Windows leg of this matrix is what would have
+  caught the `extractSessionId` bug directly, instead of it needing a
+  manual review to surface.
+
 ## [0.13.6] - 2026-01-16
 
 ### Fixed - /trip Command Structure

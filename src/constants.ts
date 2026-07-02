@@ -1,6 +1,6 @@
 /**
  * Constants and pricing tables
- * Version: 0.13.6
+ * Version: 0.13.7
  */
 
 export interface ModelPricing {

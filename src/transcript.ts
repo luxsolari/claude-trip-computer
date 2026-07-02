@@ -1,11 +1,11 @@
 /**
  * Transcript parsing
- * Version: 0.13.6
+ * Version: 0.13.7
  */
 
 import { readFileSync, existsSync } from 'fs';
 import { homedir } from 'os';
-import { join, dirname } from 'path';
+import { join, dirname, basename } from 'path';
 import { execSync } from 'child_process';
 import type { SessionMetrics, TokenUsage, ModelUsage } from './types.js';
 import { MODEL_PRICING, DEFAULT_PRICING } from './constants.js';
@@ -250,7 +250,9 @@ export class TranscriptParser {
   }
 
   private extractSessionId(): string {
-    const filename = this.transcriptPath.split('/').pop() ?? '';
-    return filename.replace('.jsonl', '');
+    // basename() is platform-aware; a plain split('/') left this returning
+    // the entire path (not just the filename) on Windows, where join()
+    // produces backslash-separated paths.
+    return basename(this.transcriptPath, '.jsonl');
   }
 }

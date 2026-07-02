@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Claude Trip Computer - Installation Script
-# Version: 0.13.6
+# Version: 0.13.7
 # Platform: Linux, macOS, Windows (Git Bash/WSL)
 #
 
@@ -37,7 +37,7 @@ fi
 echo ""
 echo "================================================"
 echo "  Claude Trip Computer - Installation"
-echo "  Version 0.13.2"
+echo "  Version 0.13.7"
 echo "================================================"
 echo ""
 
